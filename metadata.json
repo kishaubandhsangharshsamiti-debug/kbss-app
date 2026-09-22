@@ -1,0 +1,6 @@
+{
+  "name": "Kishau Bandh Sangharsh Samiti",
+  "description": "Official platform for Kishau Bandh Sangharsh Samiti. Citizen registration, verifiable ID cards with QR code, assembly notices, and 6-point agenda against displacement.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,38 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.role == 'admin' || 
+         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    // Member profile photographs
+    match /member_photos/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && 
+                   request.resource.size < 5 * 1024 * 1024 &&
+                   request.resource.contentType.matches('image/.*');
+    }
+
+    // Official Meeting circulars and notices
+    match /meeting_documents/{docId} {
+      allow read: if true;
+      allow write: if isAdmin() && 
+                   request.resource.size < 15 * 1024 * 1024;
+    }
+
+    // Committee branding logos & admin signatures
+    match /committee/{fileId} {
+      allow read: if true;
+      allow write: if isAdmin() && 
+                   request.resource.size < 5 * 1024 * 1024 &&
+                   request.resource.contentType.matches('image/.*');
+    }
+  }
+}

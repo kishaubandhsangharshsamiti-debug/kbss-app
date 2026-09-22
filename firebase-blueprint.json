@@ -1,0 +1,145 @@
+{
+  "entities": {
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "User security credentials, status, role and profile references",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "mobile": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "PRESIDENT", "OFFICE_BEARER", "MEMBER"] },
+        "status": { "type": "string", "enum": ["PENDING", "CORRECTION_REQUIRED", "APPROVED", "REJECTED", "DISABLED"] },
+        "code": { "type": "string" },
+        "memberId": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["email", "mobile", "name", "role", "status"]
+    },
+    "RegistrationRequest": {
+      "title": "RegistrationRequest",
+      "description": "Public applicant registration requests awaiting review, correction, or approval",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "fatherName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "mobile": { "type": "string" },
+        "address": { "type": "string" },
+        "village": { "type": "string" },
+        "designation": { "type": "string" },
+        "education": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "CORRECTION_REQUIRED", "APPROVED", "REJECTED"] },
+        "correctionMessage": { "type": "string" },
+        "rejectionReason": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "fatherName", "email", "mobile", "address", "village", "designation", "education", "status"]
+    },
+    "MemberRecord": {
+      "title": "MemberRecord",
+      "description": "Approved members, office bearers, and president records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "code": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "PRESIDENT", "OFFICE_BEARER", "MEMBER"] },
+        "name": { "type": "string" },
+        "fatherName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "mobile": { "type": "string" },
+        "address": { "type": "string" },
+        "village": { "type": "string" },
+        "designation": { "type": "string" },
+        "education": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["APPROVED", "DISABLED"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "approvedAt": { "type": "string" }
+      },
+      "required": ["userId", "code", "role", "name", "email", "mobile", "status"]
+    },
+    "CommitteeSettings": {
+      "title": "CommitteeSettings",
+      "description": "Centralized dynamic settings for committee branding, president signature, and admin signature",
+      "type": "object",
+      "properties": {
+        "committeeName": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "presidentName": { "type": "string" },
+        "presidentSignatureUrl": { "type": "string" },
+        "adminName": { "type": "string" },
+        "adminSignatureUrl": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["committeeName", "presidentName", "adminName"]
+    },
+    "MeetingItem": {
+      "title": "MeetingItem",
+      "description": "Internal and published meetings for authenticated members",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["PUBLISHED", "DRAFT"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "date", "time", "location", "status"]
+    },
+    "UpdateItem": {
+      "title": "UpdateItem",
+      "description": "Official committee circulars and news updates for authenticated members",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["PUBLISHED", "DRAFT"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "description", "date", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "#/entities/UserAccount",
+      "description": "User security accounts and status profile"
+    },
+    "/registrationRequests/{requestId}": {
+      "schema": "#/entities/RegistrationRequest",
+      "description": "Membership registration requests submitted by users"
+    },
+    "/members/{memberId}": {
+      "schema": "#/entities/MemberRecord",
+      "description": "Official approved members and office bearers"
+    },
+    "/settings/{settingId}": {
+      "schema": "#/entities/CommitteeSettings",
+      "description": "Centralized committee settings and signatures"
+    },
+    "/meetings/{meetingId}": {
+      "schema": "#/entities/MeetingItem",
+      "description": "Meetings accessible to logged-in users"
+    },
+    "/updates/{updateId}": {
+      "schema": "#/entities/UpdateItem",
+      "description": "Updates and circulars for logged-in users"
+    }
+  }
+}

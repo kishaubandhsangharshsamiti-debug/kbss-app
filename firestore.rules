@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users Collection (profiles and status)
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // Registration Requests Collection
+    match /registrationRequests/{requestId} {
+      allow read, write: if true;
+    }
+
+    // Members Collection
+    match /members/{memberId} {
+      allow read, write: if true;
+    }
+
+    // Central Committee Settings & Dynamic Signatures
+    match /settings/{settingId} {
+      allow read, write: if true;
+    }
+
+    // Meetings Collection
+    match /meetings/{meetingId} {
+      allow read, write: if true;
+    }
+
+    // Updates Collection
+    match /updates/{updateId} {
+      allow read, write: if true;
+    }
+
+    // Code Generation Counters
+    match /counters/{counterId} {
+      allow read, write: if true;
+    }
+
+    // Admins registry
+    match /admins/{adminId} {
+      allow read, write: if true;
+    }
+
+    // Global Catch-all
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+

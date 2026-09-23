@@ -73,7 +73,7 @@ export const DEFAULT_AGENDA_ITEMS: AgendaItem[] = [
 ];
 
 export const DEFAULT_ABOUT: AboutContent = {
-  content: `Kishau Bandh Sangharsh Samiti – Gram Meloth Shambhar Kwanou is a dedicated grassroots people's collective formed to represent the residents, farmers, and traditional landholders directly affected by the proposed Kishau Dam project on the Tons River.\n\nOur collective represents the united voice of the affected village communities of Meloth, Shambhar, Kwanou, and adjacent settlements. We believe that development must never come at the catastrophic expense of rural heritage, ecological equilibrium, and the forced displacement of our ancestral communities.`,
+  content: `Kishau Bandh Sangharsh Samiti – Gram Mailoth Shambhar Kwanu is a dedicated grassroots people's collective formed to represent the residents, farmers, and traditional landholders directly affected by the proposed Kishau Dam project on the Tons River.\n\nOur collective represents the united voice of the affected village communities of Mailoth, Shambhar, Kwanu, and adjacent settlements. We believe that development must never come at the catastrophic expense of rural heritage, ecological equilibrium, and the forced displacement of our ancestral communities.`,
   objectives: [
     'Unite all affected families under an organized and transparent democratic committee.',
     'Formally convey the unanimous resolutions passed by the Gram Sabha to government bodies.',
@@ -88,7 +88,7 @@ export const DEFAULT_CONTACT: ContactInfo = {
   mobile: '+91 98765 43210',
   email: 'contact@kishaubandhsangharshsamiti.org',
   whatsapp: '+91 98765 43210',
-  address: 'Gram Meloth Shambhar Kwanou, Post Kwanou, Tehsil Chakrata / Tiuni, Dehradun District, Uttarakhand - 248197',
+  address: 'Gram Mailoth Shambhar Kwanu, Post Kwanu, Tehsil Chakrata / Tiuni, Dehradun District, Uttarakhand - 248197',
 };
 
 export const DEFAULT_SETTINGS: CommitteeSettings = {

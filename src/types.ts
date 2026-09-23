@@ -11,6 +11,8 @@ export interface UserAccount {
   mobile?: string;
   name?: string;
   role: UserRole;
+  designation?: string;
+  village?: string;
   status?: AccountStatus;
   code?: string;
   memberId?: string;

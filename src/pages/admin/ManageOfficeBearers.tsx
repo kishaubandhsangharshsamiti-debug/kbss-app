@@ -3,7 +3,11 @@ import {
   MemberService,
   SettingsService,
   CounterService,
-  OFFICE_BEARER_DESIGNATIONS
+  ALL_DESIGNATIONS,
+  OFFICE_BEARER_DESIGNATIONS,
+  formatDesignationDisplay,
+  formatCardCode,
+  getRoleForDesignation
 } from '../../services/db';
 import { MemberRecord, CommitteeSettings, UserRole } from '../../types';
 import { IdCardView } from '../../components/IdCardView';
@@ -41,8 +45,13 @@ export const ManageOfficeBearers: React.FC = () => {
   // Promote existing member modal
   const [promoteModalOpen, setPromoteModalOpen] = useState(false);
   const [selectedMemberToPromote, setSelectedMemberToPromote] = useState<string>('');
-  const [promoteDesignation, setPromoteDesignation] = useState(OFFICE_BEARER_DESIGNATIONS[0] || 'Vice President');
+  const [promoteDesignation, setPromoteDesignation] = useState(ALL_DESIGNATIONS[4]?.title || 'Vice President / उपाध्यक्ष');
   const [promoteLoading, setPromoteLoading] = useState(false);
+
+  // Edit existing office bearer designation modal
+  const [editingOfficer, setEditingOfficer] = useState<MemberRecord | null>(null);
+  const [editDesignationValue, setEditDesignationValue] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
 
   // View ID Card modal
   const [cardMember, setCardMember] = useState<MemberRecord | null>(null);
@@ -55,6 +64,11 @@ export const ManageOfficeBearers: React.FC = () => {
     const unsubMem = MemberService.subscribe((list) => {
       setAllMembers(list);
       setLoading(false);
+      // Keep cardMember up to date in real time
+      setCardMember((prev) => {
+        if (!prev) return null;
+        return list.find((m) => m.id === prev.id) || prev;
+      });
     });
     const unsubSet = SettingsService.subscribe((s) => setSettings(s));
 
@@ -92,6 +106,35 @@ export const ManageOfficeBearers: React.FC = () => {
     );
   });
 
+  const handleOpenEditOfficer = (officer: MemberRecord) => {
+    setEditingOfficer(officer);
+    setEditDesignationValue(officer.designation || ALL_DESIGNATIONS[4]?.title || 'Vice President / उपाध्यक्ष');
+  };
+
+  const handleSaveOfficerEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOfficer) return;
+    setEditLoading(true);
+    try {
+      const finalDesig = editDesignationValue.trim() || 'Executive Member / कार्यकारिणी सदस्य';
+      const role = getRoleForDesignation(finalDesig);
+      const formattedCode = formatCardCode(editingOfficer.code, finalDesig, role);
+
+      await MemberService.update(editingOfficer.id, {
+        designation: finalDesig,
+        role,
+        code: formattedCode
+      });
+
+      toast.success(`Designation updated to ${finalDesig}!`);
+      setEditingOfficer(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update designation');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   const handlePromoteMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMemberToPromote) {
@@ -101,9 +144,7 @@ export const ManageOfficeBearers: React.FC = () => {
 
     setPromoteLoading(true);
     try {
-      // Generate sequential designation-specific code: e.g. KBSS-PRES-001, KBSS-VP-001
-      const isPresident = promoteDesignation.toLowerCase().includes('president') && !promoteDesignation.toLowerCase().includes('vice');
-      const role: UserRole = isPresident ? 'PRESIDENT' : 'OFFICE_BEARER';
+      const role = getRoleForDesignation(promoteDesignation);
       const nextCode = await CounterService.getNextCode(role, promoteDesignation);
 
       await MemberService.update(selectedMemberToPromote, {
@@ -211,31 +252,131 @@ export const ManageOfficeBearers: React.FC = () => {
                     )}
                   </div>
                   <h3 className="text-sm font-bold text-slate-900 truncate mt-1">{officer.name}</h3>
-                  <p className="text-xs font-semibold text-amber-800 truncate">{officer.designation}</p>
-                  <p className="text-[11px] text-slate-500 truncate">Village: {officer.village}</p>
+                  <div className="mt-1">
+                    <span className="text-[11px] font-bold text-amber-950 bg-amber-100/80 px-2 py-0.5 rounded border border-amber-300 inline-block">
+                      {formatDesignationDisplay(officer.designation)}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate mt-1">Village: {officer.village}</p>
                 </div>
               </div>
 
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => setCardMember(officer)}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-amber-800"
-                >
-                  <CreditCard className="w-3.5 h-3.5" />
-                  View ID Card
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCardMember(officer)}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-amber-800"
+                  >
+                    <CreditCard className="w-3.5 h-3.5" />
+                    View Card
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenEditOfficer(officer)}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-amber-900 hover:text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200"
+                    title="Change designation"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    Edit Post
+                  </button>
+                </div>
 
                 <button
                   onClick={() => setDemotingOfficer(officer)}
                   className="text-[11px] font-semibold text-slate-400 hover:text-rose-600"
                 >
-                  Revert to Member
+                  Revert
                 </button>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {/* EDIT OFFICER DESIGNATION MODAL */}
+      {editingOfficer && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Change Executive Post</h3>
+                <p className="text-slate-500 text-[11px]">{editingOfficer.name} ({editingOfficer.code})</p>
+              </div>
+              <button onClick={() => setEditingOfficer(null)} className="text-slate-400 hover:text-slate-600 p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveOfficerEdit} className="space-y-4">
+              <div>
+                <label className="block font-bold text-slate-700 uppercase tracking-wider mb-1 text-[10px]">
+                  Select New Designation (नया पद चुनें) *
+                </label>
+                <select
+                  required
+                  value={
+                    ALL_DESIGNATIONS.some(
+                      (d) =>
+                        d.title === editDesignationValue ||
+                        d.english.toLowerCase() === editDesignationValue.toLowerCase() ||
+                        d.hindi === editDesignationValue
+                    )
+                      ? (ALL_DESIGNATIONS.find(
+                          (d) =>
+                            d.title === editDesignationValue ||
+                            d.english.toLowerCase() === editDesignationValue.toLowerCase() ||
+                            d.hindi === editDesignationValue
+                        )?.title || editDesignationValue)
+                      : 'CUSTOM'
+                  }
+                  onChange={(e) => {
+                    if (e.target.value !== 'CUSTOM') {
+                      setEditDesignationValue(e.target.value);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl font-medium mb-1.5"
+                >
+                  {ALL_DESIGNATIONS.filter((d) => d.role !== 'MEMBER').map((d) => (
+                    <option key={d.id} value={d.title}>
+                      {d.id}. {d.english} — {d.hindi}
+                    </option>
+                  ))}
+                  <option value="CUSTOM">Custom / Other Designation (अन्य पद)</option>
+                </select>
+                <input
+                  type="text"
+                  value={editDesignationValue}
+                  onChange={(e) => setEditDesignationValue(e.target.value)}
+                  placeholder="Or type custom designation..."
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-xs"
+                />
+              </div>
+
+              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-950">
+                <span className="font-bold block mb-0.5">Live Sync:</span>
+                Changes immediately update the member record, their digital ID card, login session, and leadership registry.
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingOfficer(null)}
+                  className="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="px-4 py-2 font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition shadow disabled:opacity-50"
+                >
+                  {editLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* PROMOTE MODAL */}
       {promoteModalOpen && (
@@ -270,17 +411,17 @@ export const ManageOfficeBearers: React.FC = () => {
 
               <div>
                 <label className="block font-bold text-slate-700 uppercase tracking-wider mb-1 text-[10px]">
-                  Executive Designation *
+                  Executive Designation (पद चयन) *
                 </label>
                 <select
                   required
                   value={promoteDesignation}
                   onChange={(e) => setPromoteDesignation(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-xl"
+                  className="w-full px-3 py-2 border rounded-xl font-medium"
                 >
-                  {OFFICE_BEARER_DESIGNATIONS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
+                  {ALL_DESIGNATIONS.filter((d) => d.role !== 'MEMBER').map((d) => (
+                    <option key={d.id} value={d.title}>
+                      {d.id}. {d.english} — {d.hindi}
                     </option>
                   ))}
                 </select>

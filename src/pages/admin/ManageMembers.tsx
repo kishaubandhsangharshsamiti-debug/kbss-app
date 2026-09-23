@@ -4,8 +4,12 @@ import {
   SettingsService,
   CounterService,
   AFFECTED_VILLAGES,
+  ALL_DESIGNATIONS,
   DESIGNATION_OPTIONS,
-  EDUCATION_OPTIONS
+  EDUCATION_OPTIONS,
+  formatDesignationDisplay,
+  formatCardCode,
+  getRoleForDesignation
 } from '../../services/db';
 import { MemberRecord, CommitteeSettings, UserRole } from '../../types';
 import { IdCardView } from '../../components/IdCardView';
@@ -47,6 +51,7 @@ export const ManageMembers: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [villageFilter, setVillageFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
+  const [designationFilter, setDesignationFilter] = useState<string>('');
 
   // Modals
   const [selectedMember, setSelectedMember] = useState<MemberRecord | null>(null);
@@ -69,6 +74,11 @@ export const ManageMembers: React.FC = () => {
     const unsubMem = MemberService.subscribe((list) => {
       setMembers(list);
       setLoading(false);
+      // Keep selectedMember up to date if modal is open
+      setSelectedMember((prev) => {
+        if (!prev) return null;
+        return list.find((m) => m.id === prev.id) || prev;
+      });
     });
     const unsubSet = SettingsService.subscribe((s) => setSettings(s));
 
@@ -81,6 +91,11 @@ export const ManageMembers: React.FC = () => {
   const filteredMembers = members.filter((m) => {
     if (villageFilter && m.village !== villageFilter) return false;
     if (roleFilter && m.role !== roleFilter) return false;
+    if (designationFilter) {
+      const matchDesig = (m.designation || '').toLowerCase();
+      const targetDesig = designationFilter.toLowerCase();
+      if (!matchDesig.includes(targetDesig) && !targetDesig.includes(matchDesig)) return false;
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchName = m.name?.toLowerCase().includes(q);
@@ -107,6 +122,16 @@ export const ManageMembers: React.FC = () => {
     setEditCode(m.code || '');
     setEditPhotoUrl(m.photoUrl || '');
     setModalMode('EDIT');
+  };
+
+  const handleDesignationSelect = (newDesig: string) => {
+    setEditDesignation(newDesig);
+    const autoRole = getRoleForDesignation(newDesig);
+    setEditRole(autoRole);
+    if (selectedMember) {
+      const formatted = formatCardCode(selectedMember.code, newDesig, autoRole);
+      setEditCode(formatted);
+    }
   };
 
   const handleRegenerateCode = async () => {
@@ -148,19 +173,23 @@ export const ManageMembers: React.FC = () => {
     if (!selectedMember) return;
     setSaving(true);
     try {
+      const finalDesignation = editDesignation.trim() || 'General Member / सामान्य सदस्य';
+      const autoRole = editRole || getRoleForDesignation(finalDesignation);
+      const formattedCode = formatCardCode(editCode.trim() || selectedMember.code, finalDesignation, autoRole);
+
       await MemberService.update(selectedMember.id, {
         name: editName.trim(),
         fatherName: editFatherName.trim(),
-        designation: editDesignation.trim(),
+        designation: finalDesignation,
         village: editVillage.trim(),
         mobile: editMobile.trim(),
         education: editEducation.trim(),
         address: editAddress.trim(),
-        role: editRole,
-        code: editCode.trim() || selectedMember.code,
+        role: autoRole,
+        code: formattedCode,
         photoUrl: editPhotoUrl
       });
-      toast.success('Member record updated successfully');
+      toast.success('Member record and designation updated successfully');
       setModalMode(null);
     } catch (err: any) {
       toast.error(err.message || 'Failed to update member');
@@ -242,11 +271,26 @@ export const ManageMembers: React.FC = () => {
             onChange={(e) => setRoleFilter(e.target.value)}
             className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-700"
           >
-            <option value="">All Roles</option>
+            <option value="">All Roles (सभी पद प्रकार)</option>
             <option value="MEMBER">General Member</option>
             <option value="OFFICE_BEARER">Office Bearer</option>
             <option value="PRESIDENT">President</option>
             <option value="ADMIN">Administrator</option>
+          </select>
+        </div>
+
+        <div className="w-full sm:w-56">
+          <select
+            value={designationFilter}
+            onChange={(e) => setDesignationFilter(e.target.value)}
+            className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-700 font-medium"
+          >
+            <option value="">All Designations (सभी पद)</option>
+            {ALL_DESIGNATIONS.map((d) => (
+              <option key={d.id} value={d.english}>
+                {d.id}. {d.english} — {d.hindi}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -294,7 +338,11 @@ export const ManageMembers: React.FC = () => {
                         <div>
                           <span className="font-bold text-slate-900 block text-sm">{m.name}</span>
                           <span className="text-slate-500 text-[11px]">S/o {m.fatherName}</span>
-                          <span className="text-emerald-800 font-semibold block text-[10px]">{m.designation}</span>
+                          <div className="mt-0.5">
+                            <span className="text-emerald-950 bg-emerald-100/90 border border-emerald-300 font-bold px-1.5 py-0.5 rounded text-[10.5px] inline-block leading-tight shadow-2xs">
+                              {formatDesignationDisplay(m.designation)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -456,33 +504,63 @@ export const ManageMembers: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    Designation (पद)
+                    Designation (पद चयन)
                   </label>
+                  <select
+                    value={
+                      ALL_DESIGNATIONS.some(
+                        (d) =>
+                          d.title === editDesignation ||
+                          d.english.toLowerCase() === editDesignation.toLowerCase() ||
+                          d.hindi === editDesignation
+                      )
+                        ? (ALL_DESIGNATIONS.find(
+                            (d) =>
+                              d.title === editDesignation ||
+                              d.english.toLowerCase() === editDesignation.toLowerCase() ||
+                              d.hindi === editDesignation
+                          )?.title || editDesignation)
+                        : 'CUSTOM'
+                    }
+                    onChange={(e) => {
+                      if (e.target.value !== 'CUSTOM') {
+                        handleDesignationSelect(e.target.value);
+                      }
+                    }}
+                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white font-medium text-xs mb-1.5"
+                  >
+                    {ALL_DESIGNATIONS.map((d) => (
+                      <option key={d.id} value={d.title}>
+                        {d.id}. {d.english} — {d.hindi}
+                      </option>
+                    ))}
+                    <option value="CUSTOM">Custom / Other Designation (अन्य पद)</option>
+                  </select>
                   <input
                     type="text"
-                    list="member-designation-options"
                     value={editDesignation}
-                    onChange={(e) => setEditDesignation(e.target.value)}
-                    placeholder="Enter or select designation..."
-                    className="w-full px-3 py-1.5 border rounded-lg bg-white"
+                    onChange={(e) => handleDesignationSelect(e.target.value)}
+                    placeholder="Or type custom designation..."
+                    className="w-full px-2.5 py-1 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white"
                   />
-                  <datalist id="member-designation-options">
-                    {DESIGNATION_OPTIONS.map((d) => (
-                      <option key={d} value={d} />
-                    ))}
-                  </datalist>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Role Type</label>
+                  <label className="font-bold text-slate-700 block mb-1">Role Type (भूमिका)</label>
                   <select
                     value={editRole}
-                    onChange={(e) => setEditRole(e.target.value as UserRole)}
-                    className="w-full px-3 py-1.5 border rounded-lg"
+                    onChange={(e) => {
+                      const newRole = e.target.value as UserRole;
+                      setEditRole(newRole);
+                      if (selectedMember) {
+                        setEditCode(formatCardCode(selectedMember.code, editDesignation, newRole));
+                      }
+                    }}
+                    className="w-full px-3 py-1.5 border rounded-lg bg-white"
                   >
-                    <option value="MEMBER">General Member</option>
-                    <option value="OFFICE_BEARER">Office Bearer</option>
-                    <option value="PRESIDENT">President</option>
-                    <option value="ADMIN">Administrator</option>
+                    <option value="MEMBER">General Member (सामान्य सदस्य)</option>
+                    <option value="OFFICE_BEARER">Office Bearer (पदाधिकारी)</option>
+                    <option value="PRESIDENT">President (अध्यक्ष)</option>
+                    <option value="ADMIN">Administrator (व्यवस्थापक)</option>
                   </select>
                 </div>
               </div>
@@ -513,17 +591,20 @@ export const ManageMembers: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Village</label>
-                  <select
+                  <input
+                    type="text"
+                    required
+                    list="admin-village-suggestions"
                     value={editVillage}
                     onChange={(e) => setEditVillage(e.target.value)}
                     className="w-full px-3 py-1.5 border rounded-lg"
-                  >
+                    placeholder="Enter village name"
+                  />
+                  <datalist id="admin-village-suggestions">
                     {AFFECTED_VILLAGES.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
+                      <option key={v} value={v} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Mobile</label>

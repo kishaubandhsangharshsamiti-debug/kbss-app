@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { RegistrationService, AFFECTED_VILLAGES, DESIGNATION_OPTIONS, EDUCATION_OPTIONS } from '../services/db';
+import { RegistrationService, AFFECTED_VILLAGES, ALL_DESIGNATIONS, DESIGNATION_OPTIONS, EDUCATION_OPTIONS } from '../services/db';
 import { RegistrationRequest } from '../types';
 import { compressImage } from '../utils/imageCompressor';
 import {
@@ -303,31 +303,39 @@ export const CorrectionPage: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Village *
                 </label>
-                <select
-                  value={village}
-                  onChange={(e) => setVillage(e.target.value)}
-                  className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700"
-                >
-                  {AFFECTED_VILLAGES.map((v) => (
-                    <option key={v} value={v}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    list="correction-village-suggestions"
+                    placeholder="e.g. Mailoth / Shambhar / Kwanu"
+                    value={village}
+                    onChange={(e) => setVillage(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700"
+                  />
+                  <datalist id="correction-village-suggestions">
+                    {AFFECTED_VILLAGES.map((v) => (
+                      <option key={v} value={v} />
+                    ))}
+                  </datalist>
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Designation Type *
+                  Designation (पद) *
                 </label>
                 <select
                   value={designation}
                   onChange={(e) => setDesignation(e.target.value)}
-                  className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700"
+                  className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700 font-medium"
                 >
-                  {DESIGNATION_OPTIONS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
+                  {ALL_DESIGNATIONS.map((d) => (
+                    <option key={d.id} value={d.title}>
+                      {d.id}. {d.english} — {d.hindi}
                     </option>
                   ))}
                 </select>

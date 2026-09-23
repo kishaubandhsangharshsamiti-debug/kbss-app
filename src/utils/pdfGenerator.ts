@@ -41,7 +41,7 @@ export const generateMemberIdCardPdf = async (
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(5.5);
-  doc.text('GRAM MELOTH SHAMBHAR KWANOU', cardWidth / 2, 8.5, { align: 'center' });
+  doc.text('GRAM MAILOTH SHAMBHAR KWANU', cardWidth / 2, 8.5, { align: 'center' });
 
   doc.setFontSize(4.5);
   doc.text('MEMBERSHIP IDENTITY CARD', cardWidth / 2, 11.5, { align: 'center' });

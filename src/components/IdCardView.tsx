@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { MemberRecord, CommitteeSettings } from '../types';
-import { formatCardCode } from '../services/db';
+import { formatCardCode, formatDesignationDisplay } from '../services/db';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   Download,
@@ -236,90 +236,63 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
       const cardWidth = 85.6;
       const cardHeight = 54.0;
 
-      // Header on A4
-      pdf.setFontSize(14);
+      // Header on A4 Page
+      pdf.setFontSize(15);
       pdf.setTextColor(15, 60, 40);
-      pdf.text(settings.committeeName || 'Kishau Bandh Sangharsh Samiti', 105, 18, { align: 'center' });
+      pdf.text(settings.committeeName || 'Kishau Bandh Sangharsh Samiti', 105, 22, { align: 'center' });
 
-      pdf.setFontSize(8.5);
-      pdf.setTextColor(71, 85, 105);
-      pdf.text('Official Identity Credentials • Standard Aadhaar / PVC Card Size (85.60 mm × 54.00 mm)', 105, 23, { align: 'center' });
-
-      // ================= FORMAT 1: FOLD & LAMINATE =================
       pdf.setFontSize(9);
-      pdf.setTextColor(15, 23, 42);
-      pdf.text('1. FOLD & LAMINATE FORMAT (मोड़कर लैमिनेट करने हेतु)', 105, 33, { align: 'center' });
-      pdf.setFontSize(7.5);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text('Front and Back aligned side-by-side. Fold down center line and insert into standard card pouch.', 105, 37, { align: 'center' });
+      pdf.setTextColor(71, 85, 105);
+      pdf.text('Official Identity Card • Standard Aadhaar / PVC Card Size (85.60 mm × 54.00 mm)', 105, 28, { align: 'center' });
 
-      // Front Card (Left side of fold line)
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text('Front and Back aligned side-by-side • Ready to print, cut, and laminate', 105, 34, { align: 'center' });
+
+      // Card Placement: Front and Back side-by-side
       const xFront1 = 19.4;
-      const y1 = 41;
+      const y1 = 42;
       pdf.addImage(imgFront, 'JPEG', xFront1, y1, cardWidth, cardHeight);
 
-      // Back Card (Right side of fold line)
       const xBack1 = 105.0;
       pdf.addImage(imgBack, 'JPEG', xBack1, y1, cardWidth, cardHeight);
 
       // Center Dotted Fold Line
       pdf.setDrawColor(148, 163, 184);
       pdf.setLineDashPattern([2, 2], 0);
-      pdf.line(105.0, y1 - 2, 105.0, y1 + cardHeight + 2);
+      pdf.line(105.0, y1 - 3, 105.0, y1 + cardHeight + 3);
 
-      // Outer guideline border around both
-      pdf.setLineDashPattern([1, 1], 0);
+      // Outer guideline border around both sides
+      pdf.setLineDashPattern([1.5, 1.5], 0);
       pdf.rect(xFront1, y1, cardWidth * 2, cardHeight);
 
-      // Label below format 1
-      pdf.setFontSize(7);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text('[ ✂ Center Fold Line / बीच की मोड़ रेखा ✂ ]', 105.0, y1 + cardHeight + 5, { align: 'center' });
-
-      // ================= FORMAT 2: SEPARATE CUTOUTS =================
-      const y2 = 114;
-      pdf.setFontSize(9);
-      pdf.setTextColor(15, 23, 42);
-      pdf.setLineDashPattern([], 0); // Reset solid line
-      pdf.text('2. SEPARATE CUTOUTS FORMAT (अलग-अलग कटिंग हेतु)', 105, y2 - 6, { align: 'center' });
-
+      // Guideline label below card
       pdf.setFontSize(7.5);
       pdf.setTextColor(100, 116, 139);
-      pdf.text('Front and Back separate with individual cutting borders for PVC tray / card cutters.', 105, y2 - 2, { align: 'center' });
-
-      const xFront2 = 19.4;
-      const xBack2 = 105.0;
-      pdf.addImage(imgFront, 'JPEG', xFront2, y2, cardWidth, cardHeight);
-      pdf.addImage(imgBack, 'JPEG', xBack2, y2, cardWidth, cardHeight);
-
-      // Crop guideline borders
-      pdf.setDrawColor(203, 213, 225);
-      pdf.setLineDashPattern([1.5, 1.5], 0);
-      pdf.rect(xFront2, y2, cardWidth, cardHeight);
-      pdf.rect(xBack2, y2, cardWidth, cardHeight);
+      pdf.text('[ Center Fold Line • Fold here for standard pouch lamination or cut separately ]', 105.0, y1 + cardHeight + 7, { align: 'center' });
 
       // ================= PRINT INSTRUCTIONS BOX =================
-      const yBox = 180;
+      const yBox = y1 + cardHeight + 18;
       pdf.setLineDashPattern([], 0);
       pdf.setFillColor(248, 250, 252);
       pdf.setDrawColor(226, 232, 240);
-      pdf.roundedRect(19.4, yBox, 171.2, 36, 2, 2, 'FD');
+      pdf.roundedRect(19.4, yBox, 171.2, 44, 2, 2, 'FD');
 
-      pdf.setFontSize(8.5);
+      pdf.setFontSize(9);
       pdf.setTextColor(15, 60, 40);
-      pdf.text('महत्वपूर्ण प्रिंट निर्देश (Important Print Instructions):', 24, yBox + 7);
+      pdf.text('Print & Card Preparation Instructions:', 24, yBox + 9);
 
-      pdf.setFontSize(7.5);
+      pdf.setFontSize(8);
       pdf.setTextColor(51, 65, 85);
-      pdf.text('1. Print Scale: Print at 100% scale (Select "Actual Size" - Do NOT use "Fit to Page").', 24, yBox + 13);
-      pdf.text('2. True Dimensions: Exactly 85.60 mm × 54.00 mm (Standard Aadhaar Card / Driving License / ISO CR80 PVC).', 24, yBox + 18);
-      pdf.text('3. Paper Recommendation: A4 Glossy Photo Paper (220-300 GSM) or PVC Card Lamination Sheets.', 24, yBox + 23);
-      pdf.text('4. Official Validity: Valid for Kishau Bandh Rehabilitation and Resettlement Representation (RFCTLARR 2013).', 24, yBox + 28);
+      pdf.text('1. Print Scale: Print at 100% scale (Select "Actual Size" - Do NOT use "Fit to Page").', 24, yBox + 17);
+      pdf.text('2. Exact Dimensions: 85.60 mm x 54.00 mm (Standard Aadhaar Card / ISO CR80 PVC Size).', 24, yBox + 23);
+      pdf.text('3. Printing Paper: A4 Glossy Photo Paper (220-300 GSM) or PVC Card Lamination Sheets.', 24, yBox + 29);
+      pdf.text('4. Lamination: Fold along the center dotted line, insert into standard card pouch, and laminate.', 24, yBox + 35);
 
       // Footer metadata
       pdf.setFontSize(7.5);
       pdf.setTextColor(148, 163, 184);
-      pdf.text(`Card Holder: ${member.name} • Unique ID: ${displayCode} • Designation: ${member.designation}`, 105, yBox + 46, { align: 'center' });
+      pdf.text(`Card Holder: ${member.name} • Unique ID: ${displayCode} • Designation: ${member.designation}`, 105, yBox + 54, { align: 'center' });
 
       pdf.save(`AADHAAR_ID_CARD_${displayCode}_${member.name.replace(/\s+/g, '_')}.pdf`);
       toast.dismiss(toastId);
@@ -511,14 +484,11 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="text-[11.5px] font-black uppercase tracking-tight text-amber-300 leading-none truncate">
+                <h3 className="text-[12px] font-black uppercase tracking-tight text-amber-300 leading-none truncate">
                   {settings.committeeName || 'Kishau Bandh Sangharsh Samiti'}
                 </h3>
-                <p className="text-[8.5px] text-emerald-100 font-semibold tracking-wide leading-tight truncate mt-0.5">
-                  किशाऊ बांध संघर्ष समिति • Kwanu Meloth Shambhar
-                </p>
-                <p className="text-[7.5px] text-emerald-200/90 leading-tight truncate">
-                  Project Affected Council • RFCTLARR 2013
+                <p className="text-[9px] text-emerald-100 font-semibold tracking-wide leading-tight truncate mt-1">
+                  किशाऊ बांध संघर्ष समिति • Mailoth Shambhar Kwanu
                 </p>
               </div>
             </div>
@@ -562,8 +532,8 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
                 <div className="pt-0.5 space-y-0.5 text-[9px] text-slate-800">
                   <div className="flex items-center gap-1">
                     <span className="font-semibold text-slate-500 shrink-0">पद (Designation):</span>
-                    <span className="font-bold text-emerald-950 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300 inline-block leading-tight text-[8.5px] truncate max-w-[160px]">
-                      {member.designation}
+                    <span className="font-bold text-emerald-950 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300 inline-block leading-tight text-[8.5px] truncate max-w-[165px]">
+                      {formatDesignationDisplay(member.designation)}
                     </span>
                   </div>
 
@@ -714,7 +684,7 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
                 <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                 <p className="leading-tight">
                   <strong className="text-white font-bold">Residential:</strong>{' '}
-                  {member.address || 'Shambhar Mailoth Kwanu'}, Village {member.village}
+                  {member.address || 'Mailoth Shambhar Kwanu'}, Village {member.village}
                 </p>
               </div>
 
@@ -748,7 +718,7 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
             {/* Council Demands & Security Footer */}
             <div className="border-t border-slate-800/80 pt-1.5 flex items-center justify-between text-[7.5px] text-slate-400">
               <span className="font-medium text-slate-300">
-                Verified Member • RFCTLARR Act 2013 Demands
+                Verified Member • Official ID
               </span>
               <span className="font-mono text-amber-400 font-black px-1.5 py-0.2 bg-slate-900 rounded border border-slate-800 text-[8px]">
                 {displayCode}

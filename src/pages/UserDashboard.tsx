@@ -9,7 +9,8 @@ import {
   MeetingService,
   UpdateService,
   RegistrationService,
-  formatCardCode
+  formatCardCode,
+  formatDesignationDisplay
 } from '../services/db';
 import {
   MemberRecord,
@@ -87,6 +88,7 @@ export const UserDashboard: React.FC = () => {
       return;
     }
 
+    let unsubMember: (() => void) | null = null;
     let unsubSettings: (() => void) | null = null;
     let unsubMeetings: (() => void) | null = null;
     let unsubUpdates: (() => void) | null = null;
@@ -180,6 +182,25 @@ export const UserDashboard: React.FC = () => {
 
         setMember(mem);
 
+        // Real-time member updates listener (instantly reflects designation or code changes made by admin)
+        unsubMember = MemberService.subscribe((allList) => {
+          const targetUserId = currentUser?.uid || userAccount?.id;
+          const targetEmail = (currentUser?.email || userAccount?.email || '').toLowerCase();
+          const targetMobile = userAccount?.mobile;
+          const targetMemberId = userAccount?.memberId;
+
+          const updated = allList.find((m) =>
+            (targetMemberId && m.id === targetMemberId) ||
+            (targetUserId && m.userId === targetUserId) ||
+            (targetEmail && m.email?.toLowerCase() === targetEmail) ||
+            (targetMobile && m.mobile === targetMobile)
+          );
+
+          if (updated) {
+            setMember(updated);
+          }
+        });
+
         // Central committee settings listener
         unsubSettings = SettingsService.subscribe((s) => {
           setSettings(s);
@@ -210,6 +231,7 @@ export const UserDashboard: React.FC = () => {
 
     return () => {
       clearTimeout(safetyTimer);
+      if (unsubMember) unsubMember();
       if (unsubSettings) unsubSettings();
       if (unsubMeetings) unsubMeetings();
       if (unsubUpdates) unsubUpdates();
@@ -494,7 +516,7 @@ export const UserDashboard: React.FC = () => {
                     Son/Daughter/Wife of: <strong className="text-slate-800">{member.fatherName}</strong>
                   </p>
                   <p className="text-xs text-emerald-800 font-semibold pt-1">
-                    Designation: {member.designation} • Village {member.village}
+                    Designation (पद): <strong className="text-emerald-950 font-bold">{formatDesignationDisplay(member.designation)}</strong> • Village {member.village}
                   </p>
                 </div>
                 <button
@@ -517,9 +539,9 @@ export const UserDashboard: React.FC = () => {
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
                   <span className="text-slate-500 font-bold uppercase tracking-wider block text-[10px]">
-                    Designation
+                    Designation (पद)
                   </span>
-                  <span className="font-bold text-sm text-slate-900">{member.designation}</span>
+                  <span className="font-bold text-sm text-slate-900">{formatDesignationDisplay(member.designation)}</span>
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">

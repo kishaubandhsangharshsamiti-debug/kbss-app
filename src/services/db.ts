@@ -38,8 +38,10 @@ export const DEFAULT_COMMITTEE_SETTINGS: CommitteeSettings = {
 
 // Common villages in the region
 export const AFFECTED_VILLAGES = [
-  'Meloth',
+  'Mailoth',
   'Shambhar',
+  'Kwanu',
+  'Meloth',
   'Kwanou',
   'Tiuni',
   'Morar',
@@ -54,32 +56,92 @@ export const AFFECTED_VILLAGES = [
   'Dharagad'
 ];
 
-export const DESIGNATION_OPTIONS = [
-  'Member',
-  'President',
-  'Vice President',
-  'General Secretary',
-  'Organizing Secretary',
-  'Treasurer',
-  'Media Coordinator',
-  'Village Representative',
-  'Youth Wing Representative',
-  'Women Forum Representative',
-  'Advisory Member'
+export interface DesignationInfo {
+  id: number;
+  english: string;
+  hindi: string;
+  title: string; // e.g. "President / अध्यक्ष"
+  shortCode: string;
+  role: UserRole;
+}
+
+export const ALL_DESIGNATIONS: DesignationInfo[] = [
+  { id: 1, english: 'Chief Patron', hindi: 'मुख्य संरक्षक', title: 'Chief Patron / मुख्य संरक्षक', shortCode: 'CPAT', role: 'OFFICE_BEARER' },
+  { id: 2, english: 'Patron', hindi: 'संरक्षक', title: 'Patron / संरक्षक', shortCode: 'PAT', role: 'OFFICE_BEARER' },
+  { id: 3, english: 'President', hindi: 'अध्यक्ष', title: 'President / अध्यक्ष', shortCode: 'PRES', role: 'PRESIDENT' },
+  { id: 4, english: 'Working President', hindi: 'कार्यकारी अध्यक्ष', title: 'Working President / कार्यकारी अध्यक्ष', shortCode: 'WPRES', role: 'OFFICE_BEARER' },
+  { id: 5, english: 'Vice President', hindi: 'उपाध्यक्ष', title: 'Vice President / उपाध्यक्ष', shortCode: 'VP', role: 'OFFICE_BEARER' },
+  { id: 6, english: 'General Secretary', hindi: 'महासचिव', title: 'General Secretary / महासचिव', shortCode: 'GSEC', role: 'OFFICE_BEARER' },
+  { id: 7, english: 'Secretary', hindi: 'सचिव', title: 'Secretary / सचिव', shortCode: 'SEC', role: 'OFFICE_BEARER' },
+  { id: 8, english: 'Joint Secretary', hindi: 'संयुक्त सचिव', title: 'Joint Secretary / संयुक्त सचिव', shortCode: 'JSEC', role: 'OFFICE_BEARER' },
+  { id: 9, english: 'Organizing Secretary', hindi: 'संगठन सचिव', title: 'Organizing Secretary / संगठन सचिव', shortCode: 'ORG', role: 'OFFICE_BEARER' },
+  { id: 10, english: 'Assistant Organizing Secretary', hindi: 'सह-संगठन सचिव', title: 'Assistant Organizing Secretary / सह-संगठन सचिव', shortCode: 'AORG', role: 'OFFICE_BEARER' },
+  { id: 11, english: 'Treasurer', hindi: 'कोषाध्यक्ष', title: 'Treasurer / कोषाध्यक्ष', shortCode: 'TR', role: 'OFFICE_BEARER' },
+  { id: 12, english: 'Assistant Treasurer', hindi: 'सह-कोषाध्यक्ष', title: 'Assistant Treasurer / सह-कोषाध्यक्ष', shortCode: 'ATR', role: 'OFFICE_BEARER' },
+  { id: 13, english: 'Spokesperson', hindi: 'प्रवक्ता', title: 'Spokesperson / प्रवक्ता', shortCode: 'SPOK', role: 'OFFICE_BEARER' },
+  { id: 14, english: 'Media In-charge', hindi: 'मीडिया प्रभारी', title: 'Media In-charge / मीडिया प्रभारी', shortCode: 'MED', role: 'OFFICE_BEARER' },
+  { id: 15, english: 'Social Media In-charge', hindi: 'सोशल मीडिया प्रभारी', title: 'Social Media In-charge / सोशल मीडिया प्रभारी', shortCode: 'SMED', role: 'OFFICE_BEARER' },
+  { id: 16, english: 'Publicity In-charge', hindi: 'प्रचार-प्रसार प्रभारी', title: 'Publicity In-charge / प्रचार-प्रसार प्रभारी', shortCode: 'PUB', role: 'OFFICE_BEARER' },
+  { id: 17, english: 'Office In-charge', hindi: 'कार्यालय प्रभारी', title: 'Office In-charge / कार्यालय प्रभारी', shortCode: 'OFF', role: 'OFFICE_BEARER' },
+  { id: 18, english: 'Legal Advisor', hindi: 'कानूनी सलाहकार', title: 'Legal Advisor / कानूनी सलाहकार', shortCode: 'ADV', role: 'OFFICE_BEARER' },
+  { id: 19, english: 'IT / Technical In-charge', hindi: 'आईटी / तकनीकी प्रभारी', title: 'IT / Technical In-charge / आईटी / तकनीकी प्रभारी', shortCode: 'TECH', role: 'OFFICE_BEARER' },
+  { id: 20, english: 'Documentation In-charge', hindi: 'दस्तावेज़ीकरण प्रभारी', title: 'Documentation In-charge / दस्तावेज़ीकरण प्रभारी', shortCode: 'DOC', role: 'OFFICE_BEARER' },
+  { id: 21, english: 'Grievance In-charge', hindi: 'शिकायत/समस्या निवारण प्रभारी', title: 'Grievance In-charge / शिकायत/समस्या निवारण प्रभारी', shortCode: 'GRV', role: 'OFFICE_BEARER' },
+  { id: 22, english: 'Regional President', hindi: 'क्षेत्रीय अध्यक्ष', title: 'Regional President / क्षेत्रीय अध्यक्ष', shortCode: 'RPRES', role: 'OFFICE_BEARER' },
+  { id: 23, english: 'Regional Secretary', hindi: 'क्षेत्रीय सचिव', title: 'Regional Secretary / क्षेत्रीय सचिव', shortCode: 'RSEC', role: 'OFFICE_BEARER' },
+  { id: 24, english: 'District President', hindi: 'जिला अध्यक्ष', title: 'District President / जिला अध्यक्ष', shortCode: 'DPRES', role: 'OFFICE_BEARER' },
+  { id: 25, english: 'District Secretary', hindi: 'जिला सचिव', title: 'District Secretary / जिला सचिव', shortCode: 'DSEC', role: 'OFFICE_BEARER' },
+  { id: 26, english: 'Block President', hindi: 'ब्लॉक अध्यक्ष', title: 'Block President / ब्लॉक अध्यक्ष', shortCode: 'BPRES', role: 'OFFICE_BEARER' },
+  { id: 27, english: 'Block Secretary', hindi: 'ब्लॉक सचिव', title: 'Block Secretary / ब्लॉक सचिव', shortCode: 'BSEC', role: 'OFFICE_BEARER' },
+  { id: 28, english: 'Village President', hindi: 'ग्राम अध्यक्ष', title: 'Village President / ग्राम अध्यक्ष', shortCode: 'VPRES', role: 'OFFICE_BEARER' },
+  { id: 29, english: 'Village Secretary', hindi: 'ग्राम सचिव', title: 'Village Secretary / ग्राम सचिव', shortCode: 'VSEC', role: 'OFFICE_BEARER' },
+  { id: 30, english: 'Executive Member', hindi: 'कार्यकारिणी सदस्य', title: 'Executive Member / कार्यकारिणी सदस्य', shortCode: 'EXEC', role: 'OFFICE_BEARER' },
+  { id: 31, english: 'General Member', hindi: 'सामान्य सदस्य', title: 'General Member / सामान्य सदस्य', shortCode: 'MEM', role: 'MEMBER' }
 ];
 
-export const OFFICE_BEARER_DESIGNATIONS = [
-  'President',
-  'Vice President',
-  'General Secretary',
-  'Organizing Secretary',
-  'Treasurer',
-  'Media Coordinator',
-  'Village Representative',
-  'Youth Wing Representative',
-  'Women Forum Representative',
-  'Advisory Member'
-];
+export const DESIGNATION_OPTIONS = ALL_DESIGNATIONS.map((d) => d.title);
+
+export const OFFICE_BEARER_DESIGNATIONS = ALL_DESIGNATIONS.filter((d) => d.role !== 'MEMBER').map((d) => d.title);
+
+export function getRoleForDesignation(designation?: string): UserRole {
+  if (!designation) return 'MEMBER';
+  const d = designation.toLowerCase().trim();
+  if (d.includes('admin') || d.includes('व्यवस्थापक')) return 'ADMIN';
+  if (d.includes('general member') || d === 'member' || d.includes('सामान्य सदस्य')) return 'MEMBER';
+  if (
+    d.includes('president') &&
+    !d.includes('vice') &&
+    !d.includes('working') &&
+    !d.includes('regional') &&
+    !d.includes('district') &&
+    !d.includes('block') &&
+    !d.includes('village')
+  ) {
+    return 'PRESIDENT';
+  }
+  return 'OFFICE_BEARER';
+}
+
+export function formatDesignationDisplay(designation?: string): string {
+  if (!designation) return 'General Member / सामान्य सदस्य';
+  const clean = designation.trim();
+  // If it already has both English and Hindi formatted
+  if (clean.includes('/') || /[\u0900-\u097F]/.test(clean)) {
+    return clean;
+  }
+  // Try to find in ALL_DESIGNATIONS
+  const match = ALL_DESIGNATIONS.find((item) =>
+    item.english.toLowerCase() === clean.toLowerCase() ||
+    item.english.toLowerCase().replace(/[^a-z]/g, '') === clean.toLowerCase().replace(/[^a-z]/g, '')
+  );
+  if (match) {
+    return match.title;
+  }
+  if (clean.toLowerCase() === 'member') {
+    return 'General Member / सामान्य सदस्य';
+  }
+  return clean;
+}
 
 export const EDUCATION_OPTIONS = [
   'Primary / Middle',
@@ -98,20 +160,52 @@ export function getDesignationShortCode(designation?: string, role?: UserRole): 
   const r = (role || '').toUpperCase();
 
   if (r === 'ADMIN' || d.includes('admin') || d.includes('व्यवस्थापक')) return 'ADM';
-  if (d.includes('vice president') || d.includes('उपाध्यक्ष') || d.includes('upadhyaksh')) return 'VP';
-  if (r === 'PRESIDENT' || d.includes('president') || d.includes('अध्यक्ष') || d.includes('adhyaksh')) return 'PRES';
-  if (d.includes('general secretary') || d.includes('महासचिव') || d.includes('mahasachiv')) return 'SEC';
-  if (d.includes('organizing secretary') || d.includes('संगठन सचिव')) return 'ORG';
-  if (d.includes('joint secretary') || d.includes('सह-सचिव') || d.includes('sahsachiv')) return 'JSEC';
-  if (d.includes('secretary') || d.includes('सचिव') || d.includes('sachiv')) return 'SEC';
-  if (d.includes('treasurer') || d.includes('कोषाध्यक्ष') || d.includes('koshadhyaksh') || d.includes('cashier')) return 'TR';
-  if (d.includes('media') || d.includes('spokesperson') || d.includes('प्रवक्ता') || d.includes('मीडिया')) return 'MED';
-  if (d.includes('advisor') || d.includes('सलाहकार') || d.includes('advisory')) return 'ADV';
+
+  // 1. Check direct match in ALL_DESIGNATIONS first
+  const match = ALL_DESIGNATIONS.find(
+    (item) =>
+      item.english.toLowerCase() === d ||
+      item.hindi === (designation || '').trim() ||
+      item.title.toLowerCase() === d
+  );
+  if (match) return match.shortCode;
+
+  // 2. Specific leadership positions (check compound titles first)
+  if (d.includes('chief patron') || d.includes('मुख्य संरक्षक')) return 'CPAT';
   if (d.includes('patron') || d.includes('संरक्षक')) return 'PAT';
-  if (d.includes('village representative') || d.includes('ग्राम प्रतिनिधि')) return 'REP';
-  if (d.includes('youth') || d.includes('युवा')) return 'YTH';
-  if (d.includes('women') || d.includes('महिला')) return 'WMN';
-  if (r === 'OFFICE_BEARER' || d.includes('office bearer') || d.includes('कार्यकारिणी') || d.includes('पदाधिकारी')) return 'OFF';
+  if (d.includes('working president') || d.includes('कार्यकारी अध्यक्ष')) return 'WPRES';
+  if (d.includes('vice president') || d.includes('उपाध्यक्ष')) return 'VP';
+  if (d.includes('regional president') || d.includes('क्षेत्रीय अध्यक्ष')) return 'RPRES';
+  if (d.includes('district president') || d.includes('जिला अध्यक्ष')) return 'DPRES';
+  if (d.includes('block president') || d.includes('ब्लॉक अध्यक्ष')) return 'BPRES';
+  if (d.includes('village president') || d.includes('ग्राम अध्यक्ष')) return 'VPRES';
+  if (r === 'PRESIDENT' || d.includes('president') || d.includes('अध्यक्ष') || d.includes('adhyaksh')) return 'PRES';
+
+  if (d.includes('general secretary') || d.includes('महासचिव') || d.includes('mahasachiv')) return 'GSEC';
+  if (d.includes('assistant organizing secretary') || d.includes('सह-संगठन सचिव')) return 'AORG';
+  if (d.includes('organizing secretary') || d.includes('संगठन सचिव')) return 'ORG';
+  if (d.includes('joint secretary') || d.includes('संयुक्त सचिव') || d.includes('सह-सचिव') || d.includes('sahsachiv')) return 'JSEC';
+  if (d.includes('regional secretary') || d.includes('क्षेत्रीय सचिव')) return 'RSEC';
+  if (d.includes('district secretary') || d.includes('जिला सचिव')) return 'DSEC';
+  if (d.includes('block secretary') || d.includes('ब्लॉक सचिव')) return 'BSEC';
+  if (d.includes('village secretary') || d.includes('ग्राम सचिव')) return 'VSEC';
+  if (d.includes('secretary') || d.includes('सचिव') || d.includes('sachiv')) return 'SEC';
+
+  if (d.includes('assistant treasurer') || d.includes('सह-कोषाध्यक्ष')) return 'ATR';
+  if (d.includes('treasurer') || d.includes('कोषाध्यक्ष') || d.includes('koshadhyaksh') || d.includes('cashier')) return 'TR';
+
+  if (d.includes('social media') || d.includes('सोशल मीडिया')) return 'SMED';
+  if (d.includes('media') || d.includes('मीडिया')) return 'MED';
+  if (d.includes('spokesperson') || d.includes('प्रवक्ता')) return 'SPOK';
+  if (d.includes('publicity') || d.includes('प्रचार')) return 'PUB';
+  if (d.includes('office') || d.includes('कार्यालय')) return 'OFF';
+  if (d.includes('legal') || d.includes('कानूनी') || d.includes('advocate') || d.includes('advisor') || d.includes('सलाहकार')) return 'ADV';
+  if (d.includes('technical') || d.includes('तकनीकी') || d.includes('it ') || d.startsWith('it')) return 'TECH';
+  if (d.includes('documentation') || d.includes('दस्तावेज़') || d.includes('दस्तावेज़ीकरण')) return 'DOC';
+  if (d.includes('grievance') || d.includes('शिकायत') || d.includes('निवारण')) return 'GRV';
+
+  if (d.includes('executive member') || d.includes('कार्यकारिणी सदस्य')) return 'EXEC';
+  if (r === 'OFFICE_BEARER' || d.includes('office bearer') || d.includes('पदाधिकारी')) return 'OFF';
 
   return 'MEM';
 }
@@ -732,16 +826,18 @@ export const MemberService = {
         updatedAt: now
       });
 
-      // Sync user profile if name/email/mobile/code/photoUrl changed
+      // Sync user profile if name/email/mobile/code/photoUrl/designation changed
       const member = await this.getById(id);
       if (member) {
         const userUpdates: any = {
           name: member.name,
           email: member.email,
           mobile: member.mobile,
+          designation: member.designation,
           role: member.role,
           status: member.status,
           code: member.code,
+          village: member.village,
           updatedAt: now
         };
         if (member.photoUrl) {
@@ -756,7 +852,7 @@ export const MemberService = {
           }
         }
 
-        // Also sync any other user document with matching email to prevent stale overwrites
+        // Also sync any user document with matching email to prevent stale overwrites
         if (member.email) {
           try {
             const q = query(collection(db, 'users'), where('email', '==', member.email.toLowerCase().trim()));
@@ -767,7 +863,61 @@ export const MemberService = {
           } catch (err) {
             console.warn('Could not sync user by email:', err);
           }
+
+          // Sync registration requests matching this email
+          try {
+            const qReq = query(collection(db, 'registration_requests'), where('email', '==', member.email.toLowerCase().trim()));
+            const snapReq = await getDocs(qReq);
+            for (const d of snapReq.docs) {
+              await setDoc(doc(db, 'registration_requests', d.id), {
+                designation: member.designation,
+                approvedCode: member.code,
+                status: 'APPROVED',
+                updatedAt: now
+              }, { merge: true });
+            }
+          } catch (err) {
+            console.warn('Could not sync registration request by email:', err);
+          }
         }
+
+        // Also sync by mobile if present
+        if (member.mobile) {
+          try {
+            const cleanMobile = member.mobile.replace(/\D/g, '').slice(-10);
+            const q = query(collection(db, 'users'), where('mobile', '==', cleanMobile));
+            const snap = await getDocs(q);
+            for (const d of snap.docs) {
+              await setDoc(doc(db, 'users', d.id), userUpdates, { merge: true });
+            }
+          } catch (err) {
+            console.warn('Could not sync user by mobile:', err);
+          }
+        }
+
+        // Keep local member session updated if logged in user is this member
+        try {
+          const savedSession = localStorage.getItem('kishau_member_session');
+          if (savedSession) {
+            const parsed = JSON.parse(savedSession);
+            if (
+              parsed?.id === member.id ||
+              parsed?.memberId === member.id ||
+              (parsed?.email && member.email && parsed.email.toLowerCase() === member.email.toLowerCase()) ||
+              (parsed?.mobile && member.mobile && parsed.mobile === member.mobile)
+            ) {
+              localStorage.setItem('kishau_member_session', JSON.stringify({
+                ...parsed,
+                name: member.name,
+                designation: member.designation,
+                role: member.role,
+                code: member.code,
+                village: member.village,
+                photoUrl: member.photoUrl || parsed.photoUrl
+              }));
+            }
+          }
+        } catch {}
       }
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, path);

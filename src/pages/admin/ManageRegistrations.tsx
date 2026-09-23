@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   RegistrationService,
-  AFFECTED_VILLAGES
+  AFFECTED_VILLAGES,
+  formatDesignationDisplay,
+  getRoleForDesignation
 } from '../../services/db';
 import {
   RegistrationRequest,
@@ -91,7 +93,7 @@ export const ManageRegistrations: React.FC = () => {
   const openModal = (req: RegistrationRequest, mode: 'VIEW' | 'APPROVE' | 'REJECT' | 'CORRECTION') => {
     setSelectedRequest(req);
     setModalMode(mode);
-    setApprovalRole('MEMBER');
+    setApprovalRole(getRoleForDesignation(req.designation));
     setApprovalCustomCode('');
     setRejectReason('');
     setCorrectionMsg('');
@@ -338,7 +340,9 @@ export const ManageRegistrations: React.FC = () => {
 
                     <td className="p-3.5 text-slate-700">
                       <div className="font-bold text-slate-900">{req.village}</div>
-                      <div className="text-[11px] text-slate-500">{req.designation}</div>
+                      <div className="text-[11px] font-semibold text-emerald-800">
+                        {formatDesignationDisplay(req.designation)}
+                      </div>
                     </td>
 
                     <td className="p-3.5 text-slate-500 text-[11px]">

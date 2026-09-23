@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   SettingsService,
   AFFECTED_VILLAGES,
+  ALL_DESIGNATIONS,
   DESIGNATION_OPTIONS,
   EDUCATION_OPTIONS
 } from '../services/db';
@@ -71,8 +72,9 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
   const [regEmail, setRegEmail] = useState('');
   const [regMobile, setRegMobile] = useState('');
   const [regAddress, setRegAddress] = useState('');
-  const [regVillage, setRegVillage] = useState(AFFECTED_VILLAGES[0] || 'Meloth');
-  const [regDesignation, setRegDesignation] = useState(DESIGNATION_OPTIONS[0] || 'Member');
+  const [regVillage, setRegVillage] = useState('');
+  const defaultDesignation = ALL_DESIGNATIONS.find((d) => d.english === 'General Member')?.title || ALL_DESIGNATIONS[0]?.title || 'General Member / सामान्य सदस्य';
+  const [regDesignation, setRegDesignation] = useState(defaultDesignation);
   const [regEducation, setRegEducation] = useState(EDUCATION_OPTIONS[3] || 'Bachelor Degree / Graduate');
   const [regPhotoUrl, setRegPhotoUrl] = useState('');
   const [regPassword, setRegPassword] = useState('');
@@ -258,7 +260,7 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
     }
 
     if (!regAddress.trim()) return toast.error('Address is required.');
-    if (!regVillage.trim()) return toast.error('Village selection is required.');
+    if (!regVillage.trim()) return toast.error('Village is required.');
     if (!regEducation.trim()) return toast.error('Education qualification is required.');
 
     if (!regPhotoUrl) {
@@ -281,7 +283,7 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
         email: regEmail,
         mobile: cleanMobile,
         address: regAddress,
-        village: regVillage,
+        village: regVillage.trim(),
         designation: regDesignation,
         education: regEducation,
         photoUrl: regPhotoUrl,
@@ -300,6 +302,7 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
       setRegEmail('');
       setRegMobile('');
       setRegAddress('');
+      setRegVillage('');
       setRegPhotoUrl('');
       setRegPassword('');
       setRegConfirmPassword('');
@@ -351,7 +354,7 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
             {settings.committeeName || 'Kishau Bandh Sangharsh Samiti'}
           </h1>
           <p className="text-xs text-slate-600 font-medium mt-0.5">
-            Gram Meloth Shambhar Kwanou • Central Administration & Member Portal
+            Gram Mailoth Shambhar Kwanu • Central Administration & Member Portal
           </p>
         </div>
 
@@ -595,31 +598,39 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                       Village *
                     </label>
-                    <select
-                      value={regVillage}
-                      onChange={(e) => setRegVillage(e.target.value)}
-                      className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700 bg-slate-50 focus:bg-white"
-                    >
-                      {AFFECTED_VILLAGES.map((v) => (
-                        <option key={v} value={v}>
-                          {v}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        list="village-suggestions"
+                        placeholder="e.g. Mailoth / Shambhar / Kwanu"
+                        value={regVillage}
+                        onChange={(e) => setRegVillage(e.target.value)}
+                        className="block w-full pl-10 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700 bg-slate-50 focus:bg-white"
+                      />
+                      <datalist id="village-suggestions">
+                        {AFFECTED_VILLAGES.map((v) => (
+                          <option key={v} value={v} />
+                        ))}
+                      </datalist>
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Designation Type *
+                      Designation (पद) *
                     </label>
                     <select
                       value={regDesignation}
                       onChange={(e) => setRegDesignation(e.target.value)}
-                      className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700 bg-slate-50 focus:bg-white"
+                      className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700 bg-slate-50 focus:bg-white font-medium"
                     >
-                      {DESIGNATION_OPTIONS.map((d) => (
-                        <option key={d} value={d}>
-                          {d}
+                      {ALL_DESIGNATIONS.map((d) => (
+                        <option key={d.id} value={d.title}>
+                          {d.id}. {d.english} — {d.hindi}
                         </option>
                       ))}
                     </select>

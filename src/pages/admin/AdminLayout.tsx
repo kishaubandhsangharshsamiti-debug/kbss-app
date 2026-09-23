@@ -23,8 +23,14 @@ import { CommitteeSettings } from '../../types';
 export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, isAdmin } = useAuth();
+  const { logout, isAdmin, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !isAdmin) {
+      navigate('/admin-login', { replace: true });
+    }
+  }, [isAdmin, loading, navigate]);
   const [pendingCount, setPendingCount] = useState(0);
   const [settings, setSettings] = useState<CommitteeSettings>({
     committeeName: 'Kishau Bandh Sangharsh Samiti',

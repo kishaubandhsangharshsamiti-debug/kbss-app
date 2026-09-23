@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
+import { SessionTimeoutWatcher } from './components/SessionTimeoutWatcher';
 
 // Primary App Pages
 import { AuthPortal } from './pages/AuthPortal';
@@ -23,6 +24,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <SessionTimeoutWatcher />
         <Toaster
           position="top-right"
           toastOptions={{

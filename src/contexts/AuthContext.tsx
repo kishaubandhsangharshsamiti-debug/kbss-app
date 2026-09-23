@@ -102,15 +102,51 @@ async function resolveAdminProfile(uid: string, email: string): Promise<UserAcco
   };
 }
 
+// Inactivity timeout limit: 3 minutes = 180,000 milliseconds
+export const INACTIVITY_TIMEOUT_MS = 3 * 60 * 1000;
+
+export const isSessionExpired = (): boolean => {
+  const lastActiveStr = localStorage.getItem('kishau_last_activity');
+  if (!lastActiveStr) return true;
+  const lastActive = parseInt(lastActiveStr, 10);
+  if (isNaN(lastActive) || lastActive <= 0) return true;
+  return Date.now() - lastActive >= INACTIVITY_TIMEOUT_MS;
+};
+
+export const recordSessionActivity = () => {
+  localStorage.setItem('kishau_last_activity', Date.now().toString());
+};
+
+export const clearAllSessions = async () => {
+  localStorage.removeItem('kishau_admin_session');
+  localStorage.removeItem('kishau_member_session');
+  localStorage.removeItem('kishau_last_activity');
+  try {
+    await firebaseSignOut(auth);
+  } catch {}
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [userAccount, setUserAccount] = useState<UserAccount | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Restore persistent admin or member session on load
+  // Restore persistent admin or member session on load if within 3 minutes of last activity
   useEffect(() => {
     const savedAdmin = localStorage.getItem('kishau_admin_session');
+    const savedMember = localStorage.getItem('kishau_member_session');
+
+    // If session has expired (more than 3 mins since last activity or page closed), clear everything
+    if (savedAdmin || savedMember) {
+      if (isSessionExpired()) {
+        clearAllSessions();
+        setLoading(false);
+        return;
+      }
+      // If still within 3 minutes, refresh activity timestamp
+      recordSessionActivity();
+    }
     if (savedAdmin) {
       try {
         const parsed = JSON.parse(savedAdmin);
@@ -150,7 +186,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    const savedMember = localStorage.getItem('kishau_member_session');
     if (savedMember) {
       try {
         const parsed = JSON.parse(savedMember);
@@ -176,6 +211,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let unsubscribeDoc: (() => void) | null = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
+      // Check session expiry
+      if (isSessionExpired()) {
+        await clearAllSessions();
+        setCurrentUser(null);
+        setUserAccount(null);
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
+
       // If we already have an active admin session, do not overwrite with null
       const hasSavedAdmin = localStorage.getItem('kishau_admin_session');
       if (!fbUser && hasSavedAdmin) {
@@ -405,6 +450,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: targetEmail,
         timestamp: Date.now()
       }));
+      recordSessionActivity();
 
       setUserAccount(account);
       setIsAdmin(true);
@@ -541,6 +587,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsAdmin(approvedAccount.role === 'ADMIN');
       setCurrentUser(memberSessionUser);
       localStorage.setItem('kishau_member_session', JSON.stringify(approvedAccount));
+      recordSessionActivity();
       setLoading(false);
 
       return {
@@ -667,11 +714,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    localStorage.removeItem('kishau_admin_session');
-    localStorage.removeItem('kishau_member_session');
-    try {
-      await firebaseSignOut(auth);
-    } catch {}
+    await clearAllSessions();
     setCurrentUser(null);
     setUserAccount(null);
     setIsAdmin(false);

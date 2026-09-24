@@ -30,7 +30,7 @@ import {
 export const DEFAULT_COMMITTEE_SETTINGS: CommitteeSettings = {
   committeeName: 'Kishau Bandh Sangharsh Samiti',
   logoUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=300',
-  presidentName: 'Shri Surat Singh Tomar',
+  presidentName: 'Shri Shyam Singh Tomar',
   presidentSignatureUrl: '',
   adminName: 'Narendra Singh Tomar',
   adminSignatureUrl: '',
@@ -295,7 +295,16 @@ export const SettingsService = {
       const docRef = doc(db, 'settings', 'committee');
       const snap = await getDoc(docRef);
       if (snap.exists()) {
-        return snap.data() as CommitteeSettings;
+        const data = snap.data() as CommitteeSettings;
+        if (!data.presidentName || data.presidentName.toLowerCase().includes('surat')) {
+          const corrected = {
+            ...data,
+            presidentName: 'Shri Shyam Singh Tomar'
+          };
+          updateDoc(docRef, { presidentName: 'Shri Shyam Singh Tomar', updatedAt: new Date().toISOString() }).catch(() => {});
+          return corrected;
+        }
+        return data;
       }
       // Initialize if not exists
       await setDoc(docRef, DEFAULT_COMMITTEE_SETTINGS);
@@ -310,7 +319,12 @@ export const SettingsService = {
     const docRef = doc(db, 'settings', 'committee');
     return onSnapshot(docRef, (snap) => {
       if (snap.exists()) {
-        callback(snap.data() as CommitteeSettings);
+        const data = snap.data() as CommitteeSettings;
+        if (!data.presidentName || data.presidentName.toLowerCase().includes('surat')) {
+          data.presidentName = 'Shri Shyam Singh Tomar';
+          updateDoc(docRef, { presidentName: 'Shri Shyam Singh Tomar', updatedAt: new Date().toISOString() }).catch(() => {});
+        }
+        callback(data);
       } else {
         callback(DEFAULT_COMMITTEE_SETTINGS);
       }
@@ -689,8 +703,20 @@ export const MemberService = {
     return onSnapshot(q, (snap) => {
       const list = snap.docs.map(d => {
         const data = d.data() as MemberRecord;
+        let memberName = data.name;
+        if (
+          (data.role === 'PRESIDENT' || data.code === '0.001' || data.code?.includes('0.001')) &&
+          (memberName?.toLowerCase().includes('surat') || !memberName)
+        ) {
+          memberName = 'Shri Shyam Singh Tomar';
+          updateDoc(doc(db, 'members', d.id), {
+            name: 'Shri Shyam Singh Tomar',
+            updatedAt: new Date().toISOString()
+          }).catch(() => {});
+        }
         return {
           ...data,
+          name: memberName,
           code: formatCardCode(data.code, data.designation, data.role),
           status: (data.status === 'DISABLED' ? 'DISABLED' : 'APPROVED') as 'DISABLED' | 'APPROVED'
         };
@@ -712,8 +738,16 @@ export const MemberService = {
       const snap = await getDocs(q);
       return snap.docs.map(d => {
         const data = d.data() as MemberRecord;
+        let memberName = data.name;
+        if (
+          (data.role === 'PRESIDENT' || data.code === '0.001' || data.code?.includes('0.001')) &&
+          (memberName?.toLowerCase().includes('surat') || !memberName)
+        ) {
+          memberName = 'Shri Shyam Singh Tomar';
+        }
         return {
           ...data,
+          name: memberName,
           code: formatCardCode(data.code, data.designation, data.role)
         };
       });
@@ -729,8 +763,16 @@ export const MemberService = {
       const snap = await getDoc(doc(db, 'members', id));
       if (!snap.exists()) return null;
       const data = snap.data() as MemberRecord;
+      let memberName = data.name;
+      if (
+        (data.role === 'PRESIDENT' || data.code === '0.001' || data.code?.includes('0.001')) &&
+        (memberName?.toLowerCase().includes('surat') || !memberName)
+      ) {
+        memberName = 'Shri Shyam Singh Tomar';
+      }
       return {
         ...data,
+        name: memberName,
         code: formatCardCode(data.code, data.designation, data.role)
       };
     } catch (e) {
@@ -1480,7 +1522,7 @@ export async function seedDemoDataIfEmpty(): Promise<boolean> {
     const defaultSettings: CommitteeSettings = {
       committeeName: 'Kishau Bandh Sangharsh Samiti',
       logoUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=300',
-      presidentName: 'Shri Surat Singh Tomar',
+      presidentName: 'Shri Shyam Singh Tomar',
       presidentSignatureUrl: '',
       adminName: 'Narendra Singh Tomar',
       adminSignatureUrl: '',
@@ -1495,9 +1537,9 @@ export async function seedDemoDataIfEmpty(): Promise<boolean> {
       userId: 'user_pres_001',
       code: '0.001',
       role: 'PRESIDENT',
-      name: 'Shri Surat Singh Tomar',
+      name: 'Shri Shyam Singh Tomar',
       fatherName: 'Late Shri Pratap Singh Tomar',
-      email: 'surattomar@kishau.org',
+      email: 'shyamsingh@kishau.org',
       mobile: '9816012345',
       address: 'Village Meloth, Tehsil Tiuni, Dehradun',
       village: 'Meloth',

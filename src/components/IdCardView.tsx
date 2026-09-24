@@ -54,10 +54,11 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
       displayCode.includes('0.001') ||
       displayCode.includes('PRES') ||
       member.code === '0.001' ||
-      (member.designation && member.designation.toLowerCase().includes('president')) ||
-      (member.designation && member.designation.includes('अध्यक्ष')) ||
-      (member.name && member.name.toLowerCase().includes('surat singh')) ||
-      (member.name && member.name.toLowerCase().includes('surat')));
+      (member.designation &&
+        (member.designation.toLowerCase().trim() === 'president' ||
+          member.designation.trim() === 'अध्यक्ष' ||
+          member.designation.toLowerCase().includes('central committee president') ||
+          member.designation.includes('समिति अध्यक्ष'))));
 
   const isOfficer =
     !isPresident &&
@@ -74,8 +75,9 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
     (settings.presidentName &&
       settings.presidentName.trim() &&
       settings.presidentName.trim().toLowerCase() !== 'president' &&
+      !settings.presidentName.toLowerCase().includes('surat') &&
       settings.presidentName.trim()) ||
-    'Surat Singh Tomar';
+    'Shyam Singh Tomar';
 
   const adminDisplayName =
     (settings.adminName &&

@@ -63,12 +63,22 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
       member.code.startsWith('0.') ||
       (member.code.length === 3 && /^\d{3}$/.test(member.code)));
 
-  // Strict Signature Rules:
-  // - Admin ID Card: Shows President's signature ONLY (approved by Central President Surat Singh Tomar)
-  // - President ID Card: Shows Admin's signature ONLY (authorized by Admin Narendra Singh Tomar)
-  // - All Other Members & Officers: Shows BOTH President & Admin signatures
-  const showPresidentSignature = !isPresident;
-  const showAdminSignature = !isAdmin;
+  // Resolve official Adhyaksh (President) & Admin names for all user ID cards
+  const presidentDisplayName =
+    (settings.presidentName &&
+      settings.presidentName.trim() &&
+      settings.presidentName.trim().toLowerCase() !== 'president' &&
+      settings.presidentName.trim()) ||
+    'Surat Singh Tomar';
+
+  const adminDisplayName =
+    (settings.adminName &&
+      settings.adminName.trim() &&
+      settings.adminName.trim().toLowerCase() !== 'administrator' &&
+      settings.adminName.trim().toLowerCase() !== 'admin' &&
+      settings.adminName.trim().toLowerCase() !== 'executive committee administrator' &&
+      settings.adminName.trim()) ||
+    'Narendra Singh Tomar';
 
   // Helper to ensure all images in element are loaded before html2canvas captures
   const waitForImages = async (element: HTMLElement) => {
@@ -555,73 +565,69 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
               </div>
             </div>
 
-            {/* Dynamic Signatures Section */}
-            <div className="bg-slate-100/95 border-t border-slate-200 px-2.5 py-1 flex items-end justify-between gap-1.5 shrink-0 h-[44px]">
-              {/* President Signature Block */}
-              {showPresidentSignature ? (
-                <div className="flex flex-col items-center text-center">
-                  <div className="h-5 flex items-end justify-center">
-                    {settings.presidentSignatureUrl ? (
-                      <img
-                        src={settings.presidentSignatureUrl}
-                        alt="President Signature"
-                        crossOrigin="anonymous"
-                        className="max-h-5 max-w-[80px] object-contain"
-                      />
-                    ) : (
-                      <span className="font-serif italic text-[9px] text-slate-800 font-bold">
-                        {settings.presidentName || 'Surat Singh Tomar'}
-                      </span>
-                    )}
-                  </div>
-                  <div className="w-20 border-t border-slate-400 mt-0.5"></div>
-                  <span className="text-[7px] font-black text-slate-800 uppercase tracking-tight">
-                    President (अध्यक्ष)
-                  </span>
+            {/* Dynamic Signatures & Authorities Section */}
+            <div className="bg-slate-100/95 border-t border-slate-200 px-2 py-1 flex items-end justify-between gap-1 shrink-0 h-[48px]">
+              {/* President (अध्यक्ष) Signature & Name Block */}
+              <div className="flex flex-col items-center text-center w-[125px] max-w-[40%] shrink-0">
+                <div className="h-4 flex items-end justify-center">
+                  {settings.presidentSignatureUrl ? (
+                    <img
+                      src={settings.presidentSignatureUrl}
+                      alt="President Signature"
+                      crossOrigin="anonymous"
+                      className="max-h-4 max-w-[80px] object-contain"
+                    />
+                  ) : (
+                    <span className="font-serif italic text-[8px] text-slate-800 font-bold leading-none">
+                      {presidentDisplayName}
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <div className="text-left flex flex-col items-start justify-end pb-0.5">
-                  <span className="text-[7px] font-black text-amber-950 bg-amber-200/90 px-1.5 py-0.2 rounded border border-amber-400 tracking-tight leading-tight">
-                    COMMITTEE PRESIDENT
-                  </span>
-                  <span className="text-[6.5px] text-slate-600 font-medium leading-tight mt-0.5">
-                    Authorized by Admin
-                  </span>
-                </div>
-              )}
+                <div className="w-full border-t border-slate-400 mt-0.5 mb-0.5"></div>
+                <span className="text-[7.5px] font-black text-slate-950 leading-tight block truncate w-full">
+                  {presidentDisplayName}
+                </span>
+                <span className="text-[6.5px] font-bold text-slate-600 uppercase tracking-tight block leading-none">
+                  अध्यक्ष (President)
+                </span>
+              </div>
 
-              {/* Admin Signature Block */}
-              {showAdminSignature ? (
-                <div className="flex flex-col items-center text-center ml-auto">
-                  <div className="h-5 flex items-end justify-center">
-                    {settings.adminSignatureUrl ? (
-                      <img
-                        src={settings.adminSignatureUrl}
-                        alt="Admin Signature"
-                        crossOrigin="anonymous"
-                        className="max-h-5 max-w-[80px] object-contain"
-                      />
-                    ) : (
-                      <span className="font-serif italic text-[9px] text-slate-800 font-bold">
-                        {settings.adminName || 'Narendra Singh Tomar'}
-                      </span>
-                    )}
-                  </div>
-                  <div className="w-20 border-t border-slate-400 mt-0.5"></div>
-                  <span className="text-[7px] font-black text-slate-800 uppercase tracking-tight">
-                    Authorized Signatory (व्यवस्थापक)
+              {/* Center Official Verification Stamp */}
+              <div className="flex flex-col items-center justify-end pb-0.5 shrink-0 px-0.5">
+                <div className="text-center">
+                  <span className="text-[6px] font-black text-emerald-800 bg-emerald-100/90 px-1 py-0.2 rounded border border-emerald-300 tracking-tight leading-tight block">
+                    ✓ प्राधिकृत
+                  </span>
+                  <span className="text-[5.5px] text-slate-500 font-bold leading-tight block mt-0.5">
+                    KBSS Official
                   </span>
                 </div>
-              ) : (
-                <div className="text-right flex flex-col items-end justify-end pb-0.5 ml-auto">
-                  <span className="text-[7px] font-black text-purple-950 bg-purple-200/90 px-1.5 py-0.2 rounded border border-purple-400 tracking-tight leading-tight">
-                    EXECUTIVE COUNCIL ADMIN
-                  </span>
-                  <span className="text-[6.5px] text-slate-600 font-medium leading-tight mt-0.5">
-                    Verified with President Approval
-                  </span>
+              </div>
+
+              {/* Admin (व्यवस्थापक) Signature & Name Block */}
+              <div className="flex flex-col items-center text-center w-[125px] max-w-[40%] shrink-0 ml-auto">
+                <div className="h-4 flex items-end justify-center">
+                  {settings.adminSignatureUrl ? (
+                    <img
+                      src={settings.adminSignatureUrl}
+                      alt="Admin Signature"
+                      crossOrigin="anonymous"
+                      className="max-h-4 max-w-[80px] object-contain"
+                    />
+                  ) : (
+                    <span className="font-serif italic text-[8px] text-slate-800 font-bold leading-none">
+                      {adminDisplayName}
+                    </span>
+                  )}
                 </div>
-              )}
+                <div className="w-full border-t border-slate-400 mt-0.5 mb-0.5"></div>
+                <span className="text-[7.5px] font-black text-slate-950 leading-tight block truncate w-full">
+                  {adminDisplayName}
+                </span>
+                <span className="text-[6.5px] font-bold text-slate-600 uppercase tracking-tight block leading-none">
+                  व्यवस्थापक (Admin)
+                </span>
+              </div>
             </div>
           </div>
         </div>

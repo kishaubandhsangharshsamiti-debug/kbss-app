@@ -23,9 +23,9 @@ export const AdminSettings: React.FC = () => {
   const [settings, setSettings] = useState<CommitteeSettings>({
     committeeName: 'Kishau Bandh Sangharsh Samiti',
     logoUrl: '',
-    presidentName: 'Surat Singh',
+    presidentName: 'Surat Singh Tomar',
     presidentSignatureUrl: '',
-    adminName: 'Administrator',
+    adminName: 'Narendra Singh Tomar',
     adminSignatureUrl: '',
     updatedAt: ''
   });

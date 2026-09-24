@@ -31,7 +31,7 @@ export const DEFAULT_COMMITTEE_SETTINGS: CommitteeSettings = {
   logoUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=300',
   presidentName: 'Shri Surat Singh Tomar',
   presidentSignatureUrl: '',
-  adminName: 'Executive Committee Administrator',
+  adminName: 'Narendra Singh Tomar',
   adminSignatureUrl: '',
   updatedAt: new Date().toISOString()
 };
@@ -1264,7 +1264,7 @@ export async function seedDemoDataIfEmpty(): Promise<boolean> {
       logoUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=300',
       presidentName: 'Shri Surat Singh Tomar',
       presidentSignatureUrl: '',
-      adminName: 'Executive Committee Administrator',
+      adminName: 'Narendra Singh Tomar',
       adminSignatureUrl: '',
       updatedAt: now
     };

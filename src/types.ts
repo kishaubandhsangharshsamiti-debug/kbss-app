@@ -211,3 +211,22 @@ export interface DashboardStats {
   totalMeetings: number;
 }
 
+export interface PasswordResetRequest {
+  id: string;
+  userId?: string;
+  memberId?: string;
+  memberCode?: string;
+  name: string;
+  email: string;
+  mobile: string;
+  village?: string;
+  newPassword: string;
+  note?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  updatedAt: string;
+  approvedAt?: string;
+  approvedBy?: string;
+  rejectionReason?: string;
+}
+

@@ -14,10 +14,11 @@ import {
   X,
   Shield,
   Clock,
-  ArrowLeft
+  ArrowLeft,
+  KeyRound
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { RegistrationService, SettingsService } from '../../services/db';
+import { RegistrationService, SettingsService, PasswordResetService } from '../../services/db';
 import { CommitteeSettings } from '../../types';
 
 export const AdminLayout: React.FC = () => {
@@ -32,6 +33,7 @@ export const AdminLayout: React.FC = () => {
     }
   }, [isAdmin, loading, navigate]);
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingPasswordCount, setPendingPasswordCount] = useState(0);
   const [settings, setSettings] = useState<CommitteeSettings>({
     committeeName: 'Kishau Bandh Sangharsh Samiti',
     logoUrl: '',
@@ -48,12 +50,18 @@ export const AdminLayout: React.FC = () => {
       setPendingCount(pending);
     });
 
+    const unsubPwd = PasswordResetService.subscribe((reqs) => {
+      const pending = reqs.filter(r => r.status === 'PENDING').length;
+      setPendingPasswordCount(pending);
+    });
+
     const unsubSettings = SettingsService.subscribe((s) => {
       setSettings(s);
     });
 
     return () => {
       unsubReg();
+      unsubPwd();
       unsubSettings();
     };
   }, []);
@@ -65,6 +73,12 @@ export const AdminLayout: React.FC = () => {
       path: '/admin/registrations',
       icon: UserCheck,
       badge: pendingCount > 0 ? pendingCount : undefined
+    },
+    {
+      name: 'Password Requests',
+      path: '/admin/password-requests',
+      icon: KeyRound,
+      badge: pendingPasswordCount > 0 ? pendingPasswordCount : undefined
     },
     { name: 'Member Registry', path: '/admin/members', icon: Users },
     { name: 'Office Bearers', path: '/admin/office-bearers', icon: Award },

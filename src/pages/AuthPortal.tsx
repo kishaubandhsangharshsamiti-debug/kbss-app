@@ -41,7 +41,15 @@ interface AuthPortalProps {
 
 export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
   const navigate = useNavigate();
-  const { loginWithEmailOrMobile, registerUser, resetPassword, currentUser, userAccount, isAdmin } = useAuth();
+  const {
+    loginWithEmailOrMobile,
+    registerUser,
+    resetPassword,
+    requestPasswordReset,
+    currentUser,
+    userAccount,
+    isAdmin
+  } = useAuth();
 
   const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab || 'login');
   const [settings, setSettings] = useState<CommitteeSettings>({
@@ -93,8 +101,18 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
 
   // Forgot password modal
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotIdentifier, setForgotIdentifier] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [showForgotNewPassword, setShowForgotNewPassword] = useState(false);
+  const [showForgotConfirmPassword, setShowForgotConfirmPassword] = useState(false);
+  const [forgotNote, setForgotNote] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccessData, setForgotSuccessData] = useState<{
+    name: string;
+    email: string;
+    code?: string;
+  } | null>(null);
 
   // Support direct URL access to tabs (?tab=register or #register, ?tab=admin or #admin, etc.)
   useEffect(() => {
@@ -313,22 +331,41 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
     }
   };
 
-  // Forgot Password Handler
+  // Forgot Password / Reset Password Request Handler
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!forgotEmail.trim()) {
-      toast.error('Please enter your registered email address or mobile number.');
+    if (!forgotIdentifier.trim()) {
+      toast.error('Please enter your registered email address, mobile number or Member Code.');
+      return;
+    }
+    if (!forgotNewPassword) {
+      toast.error('Please enter your new password.');
+      return;
+    }
+    if (forgotNewPassword.length < 6) {
+      toast.error('New password must be at least 6 characters long.');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      toast.error('New password and confirm new password do not match.');
       return;
     }
 
     setForgotLoading(true);
     try {
-      const emailSentTo = await resetPassword(forgotEmail);
-      toast.success(`Password reset link dispatched to ${emailSentTo}`);
-      setForgotPasswordOpen(false);
-      setForgotEmail('');
+      const res = await requestPasswordReset(forgotIdentifier, forgotNewPassword, forgotNote);
+      toast.success('पासवर्ड रीसेट अनुरोध व्यवस्थापक (Admin) को भेज दिया गया है!');
+      setForgotSuccessData({
+        name: res.name,
+        email: res.email,
+        code: res.memberCode
+      });
+      setForgotIdentifier('');
+      setForgotNewPassword('');
+      setForgotConfirmPassword('');
+      setForgotNote('');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to send password reset email.');
+      toast.error(err.message || 'Failed to submit password reset request.');
     } finally {
       setForgotLoading(false);
     }
@@ -814,7 +851,7 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
                     <button
                       type="button"
                       onClick={() => {
-                        setForgotEmail(adminIdentifier || 'kishaubandhsangharshsamiti@gmail.com');
+                        setForgotIdentifier(adminIdentifier || 'kishaubandhsangharshsamiti@gmail.com');
                         setForgotPasswordOpen(true);
                       }}
                       className="text-xs font-semibold text-amber-800 hover:underline"
@@ -950,53 +987,162 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2 text-slate-900">
                 <KeyRound className="w-5 h-5 text-emerald-800" />
-                <h3 className="text-base font-bold">Reset Password</h3>
+                <h3 className="text-base font-bold">
+                  {forgotSuccessData ? 'अनुरोध भेजा गया' : 'Reset Password (पासवर्ड रीसेट)'}
+                </h3>
               </div>
               <button
                 type="button"
-                onClick={() => setForgotPasswordOpen(false)}
+                onClick={() => {
+                  setForgotPasswordOpen(false);
+                  setForgotSuccessData(null);
+                }}
                 className="text-slate-400 hover:text-slate-600 text-sm font-bold"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-slate-600">
-              Enter your registered email address or mobile number. We will send a secure password reset link to your email.
-            </p>
-
-            <form onSubmit={handleForgotPassword} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Registered Email or Mobile
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. member@gmail.com or 9876543210"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  className="block w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700"
-                />
-              </div>
-
-              <div className="flex gap-2 justify-end pt-2">
+            {forgotSuccessData ? (
+              <div className="text-center py-3 space-y-3">
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto text-emerald-800 border-2 border-emerald-300">
+                  <CheckCircle2 className="w-7 h-7" />
+                </div>
+                <h4 className="text-base font-bold text-slate-900">
+                  अनुरोध व्यवस्थापक को सफलतापूर्वक भेजा गया!
+                </h4>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 space-y-1">
+                  <p className="font-bold text-slate-900">{forgotSuccessData.name}</p>
+                  <p className="text-slate-600 font-mono">
+                    {forgotSuccessData.code ? `${forgotSuccessData.code} • ` : ''}
+                    {forgotSuccessData.email}
+                  </p>
+                </div>
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 text-left space-y-1">
+                  <p className="font-bold">✓ व्यवस्थापक (Admin) की स्वीकृति के बाद:</p>
+                  <p className="text-emerald-800">
+                    जैसे ही व्यवस्थापक आपके अनुरोध को स्वीकृत (Approve) करेंगे, आप अपने नए पासवर्ड से सीधे पोर्टल पर लॉगिन कर सकेंगे।
+                  </p>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setForgotPasswordOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                  onClick={() => {
+                    setForgotPasswordOpen(false);
+                    setForgotSuccessData(null);
+                  }}
+                  className="w-full py-2.5 px-4 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg font-bold text-xs transition"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={forgotLoading}
-                  className="px-4 py-2 text-xs font-bold text-white bg-emerald-800 hover:bg-emerald-900 rounded-lg transition disabled:opacity-50"
-                >
-                  {forgotLoading ? 'Sending Link...' : 'Send Reset Link'}
+                  लॉगिन पर वापस जाएं (Back to Login)
                 </button>
               </div>
-            </form>
+            ) : (
+              <>
+                <p className="text-xs text-slate-600">
+                  अपना पंजीकृत विवरण व नया पासवर्ड दर्ज कर व्यवस्थापक को अनुरोध भेजें। एडमिन अनुमोदन (Approval) के बाद आप नए पासवर्ड से लॉगिन कर सकेंगे।
+                </p>
+
+                <form onSubmit={handleForgotPassword} className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      पंजीकृत ईमेल, मोबाइल नंबर या सदस्य कोड
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="उदा. member@gmail.com, 9876543210 या KBSS-MEM-00001"
+                      value={forgotIdentifier}
+                      onChange={(e) => setForgotIdentifier(e.target.value)}
+                      className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700 bg-slate-50 focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      नया पासवर्ड (New Password)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showForgotNewPassword ? 'text' : 'password'}
+                        required
+                        minLength={6}
+                        placeholder="कम से कम 6 अक्षर दर्ज करें"
+                        value={forgotNewPassword}
+                        onChange={(e) => setForgotNewPassword(e.target.value)}
+                        className="block w-full px-3 py-2 pr-10 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700 bg-slate-50 focus:bg-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotNewPassword(!showForgotNewPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                      >
+                        {showForgotNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      नया पासवर्ड पुनः दर्ज करें (Confirm New Password)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showForgotConfirmPassword ? 'text' : 'password'}
+                        required
+                        minLength={6}
+                        placeholder="नया पासवर्ड दोबारा दर्ज करें"
+                        value={forgotConfirmPassword}
+                        onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                        className="block w-full px-3 py-2 pr-10 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700 bg-slate-50 focus:bg-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotConfirmPassword(!showForgotConfirmPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                      >
+                        {showForgotConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      कारण / टिप्पणी (वैकल्पिक - Note for Admin)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="उदा. पुराना पासवर्ड याद नहीं है"
+                      value={forgotNote}
+                      onChange={(e) => setForgotNote(e.target.value)}
+                      className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-700 bg-slate-50 focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 justify-end pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setForgotPasswordOpen(false)}
+                      className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="px-4 py-2 text-xs font-bold text-white bg-emerald-800 hover:bg-emerald-900 rounded-lg transition disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                      {forgotLoading ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>भेजा जा रहा है...</span>
+                        </>
+                      ) : (
+                        <span>व्यवस्थापक को अनुरोध भेजें</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}

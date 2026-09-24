@@ -19,14 +19,17 @@ import {
   RegistrationService,
   MemberService,
   MeetingService,
-  UpdateService
+  UpdateService,
+  PasswordResetService
 } from '../../services/db';
 import {
   RegistrationRequest,
   MemberRecord,
   MeetingItem,
-  UpdateItem
+  UpdateItem,
+  PasswordResetRequest
 } from '../../types';
+import { KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AdminDashboard: React.FC = () => {
@@ -34,6 +37,7 @@ export const AdminDashboard: React.FC = () => {
   const [members, setMembers] = useState<MemberRecord[]>([]);
   const [meetings, setMeetings] = useState<MeetingItem[]>([]);
   const [updates, setUpdates] = useState<UpdateItem[]>([]);
+  const [passwordRequests, setPasswordRequests] = useState<PasswordResetRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,6 +45,7 @@ export const AdminDashboard: React.FC = () => {
     const unsubMem = MemberService.subscribe((list) => setMembers(list));
     const unsubMeet = MeetingService.subscribe((list) => setMeetings(list), false);
     const unsubUpd = UpdateService.subscribe((list) => setUpdates(list), false);
+    const unsubPwd = PasswordResetService.subscribe((list) => setPasswordRequests(list));
 
     setLoading(false);
 
@@ -49,10 +54,12 @@ export const AdminDashboard: React.FC = () => {
       unsubMem();
       unsubMeet();
       unsubUpd();
+      unsubPwd();
     };
   }, []);
 
   const pendingRequests = registrations.filter((r) => r.status === 'PENDING');
+  const pendingPasswordRequests = passwordRequests.filter((r) => r.status === 'PENDING');
   const correctionRequests = registrations.filter((r) => r.status === 'CORRECTION_REQUIRED');
   const officeBearers = members.filter((m) => m.role === 'OFFICE_BEARER' || m.role === 'PRESIDENT');
 
@@ -170,6 +177,32 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Pending Password Reset Requests Alert Banner */}
+      {pendingPasswordRequests.length > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-900 shrink-0">
+              <KeyRound className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-amber-950">
+                {pendingPasswordRequests.length} पासवर्ड रीसेट अनुरोध स्वीकृति हेतु लंबित हैं!
+              </h3>
+              <p className="text-xs text-amber-800 mt-0.5">
+                सदस्यों ने नए पासवर्ड के साथ रीसेट अनुरोध भेजा है। व्यवस्थापक के अनुमोदन के बाद ही वे नए पासवर्ड से लॉगिन कर सकेंगे।
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/admin/password-requests"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs transition shadow-sm shrink-0"
+          >
+            <span>अनुरोध समीक्षा करें ({pendingPasswordRequests.length})</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
 
       {/* Pending Applications Quick Review Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">

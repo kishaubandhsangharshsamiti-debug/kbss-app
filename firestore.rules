@@ -12,6 +12,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Password Reset Requests Collection
+    match /passwordResetRequests/{requestId} {
+      allow read, write: if true;
+    }
+
     // Members Collection
     match /members/{memberId} {
       allow read, write: if true;

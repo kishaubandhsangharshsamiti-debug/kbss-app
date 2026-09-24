@@ -22,7 +22,8 @@ import {
   MeetingItem,
   UpdateItem,
   UserRole,
-  AccountStatus
+  AccountStatus,
+  PasswordResetRequest
 } from '../types';
 
 // Default Committee Settings
@@ -1107,6 +1108,223 @@ export const UserService = {
     return !!req && req.status !== 'REJECTED';
   }
 };
+
+// ---------------------------------------------------------------------------
+// 5.5 PASSWORD RESET REQUEST SERVICE
+// ---------------------------------------------------------------------------
+export const PasswordResetService = {
+  async submit(data: {
+    identifier: string;
+    newPassword: string;
+    note?: string;
+  }): Promise<PasswordResetRequest> {
+    const trimmed = data.identifier.trim();
+    const cleanMobile = trimmed.replace(/\D/g, '').slice(-10);
+    const cleanEmail = trimmed.toLowerCase();
+
+    // 1. Resolve user profile across all collections
+    let foundEmail = '';
+    let foundMobile = '';
+    let foundName = '';
+    let foundUserId = '';
+    let foundMemberId = '';
+    let foundCode = '';
+    let foundVillage = '';
+
+    // Check by email
+    let user = await UserService.getByEmail(cleanEmail);
+    let member = await MemberService.getByEmail(cleanEmail);
+    let reg = await RegistrationService.getByEmail(cleanEmail);
+
+    // If not found, check by mobile if 10 digits
+    if (!user && !member && !reg && /^[6-9]\d{9}$/.test(cleanMobile)) {
+      user = await UserService.getByMobile(cleanMobile);
+      member = await MemberService.getByMobile(cleanMobile);
+      reg = await RegistrationService.getByMobile(cleanMobile);
+    }
+
+    // If not found, check by member code
+    if (!user && !member && !reg) {
+      member = await MemberService.getByCode(trimmed);
+      if (member?.email) {
+        user = await UserService.getByEmail(member.email);
+      }
+    }
+
+    if (!user && !member && !reg) {
+      throw new Error(
+        'No registered account found with "' +
+          trimmed +
+          '". Please ensure you enter your registered email, mobile number, or Member Code.'
+      );
+    }
+
+    foundEmail = member?.email || user?.email || reg?.email || '';
+    foundMobile = member?.mobile || user?.mobile || reg?.mobile || '';
+    foundName = member?.name || user?.name || reg?.name || 'Member';
+    foundUserId = user?.id || member?.userId || reg?.userId || '';
+    foundMemberId = member?.id || user?.memberId || '';
+    foundCode = member?.code || user?.code || reg?.approvedCode || '';
+    foundVillage = member?.village || user?.village || reg?.village || '';
+
+    const requestId = `pwd_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const now = new Date().toISOString();
+
+    const request: PasswordResetRequest = {
+      id: requestId,
+      userId: foundUserId,
+      memberId: foundMemberId,
+      memberCode: foundCode,
+      name: foundName,
+      email: foundEmail,
+      mobile: foundMobile,
+      village: foundVillage,
+      newPassword: data.newPassword,
+      note: data.note || '',
+      status: 'PENDING',
+      createdAt: now,
+      updatedAt: now
+    };
+
+    const path = 'passwordResetRequests';
+    try {
+      await setDoc(doc(db, 'passwordResetRequests', requestId), request);
+      return request;
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, path);
+      throw e;
+    }
+  },
+
+  subscribe(callback: (requests: PasswordResetRequest[]) => void): Unsubscribe {
+    const q = query(collection(db, 'passwordResetRequests'));
+    return onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ ...d.data(), id: d.id } as PasswordResetRequest));
+        list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        callback(list);
+      },
+      (err) => {
+        console.warn('Password reset requests subscription error:', err);
+        callback([]);
+      }
+    );
+  },
+
+  async getAll(): Promise<PasswordResetRequest[]> {
+    const path = 'passwordResetRequests';
+    try {
+      const snap = await getDocs(collection(db, 'passwordResetRequests'));
+      const list = snap.docs.map((d) => ({ ...d.data(), id: d.id } as PasswordResetRequest));
+      list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+      return list;
+    } catch (e) {
+      handleFirestoreError(e, OperationType.LIST, path);
+      return [];
+    }
+  },
+
+  async approve(requestId: string, adminName: string): Promise<void> {
+    const path = `passwordResetRequests/${requestId}`;
+    try {
+      const reqSnap = await getDoc(doc(db, 'passwordResetRequests', requestId));
+      if (!reqSnap.exists()) {
+        throw new Error('Password reset request not found');
+      }
+      const req = reqSnap.data() as PasswordResetRequest;
+      const now = new Date().toISOString();
+
+      // 1. Update user password in users collection
+      if (req.userId) {
+        await updateDoc(doc(db, 'users', req.userId), {
+          password: req.newPassword,
+          updatedAt: now
+        }).catch(async () => {
+          await setDoc(
+            doc(db, 'users', req.userId!),
+            {
+              password: req.newPassword,
+              updatedAt: now
+            },
+            { merge: true }
+          );
+        });
+      }
+
+      // Also ensure by email in users collection
+      if (req.email) {
+        const uSnap = await getDocs(
+          query(collection(db, 'users'), where('email', '==', req.email.toLowerCase().trim()))
+        );
+        for (const d of uSnap.docs) {
+          await updateDoc(doc(db, 'users', d.id), {
+            password: req.newPassword,
+            updatedAt: now
+          }).catch(() => {});
+        }
+
+        // Also update in registrationRequests if present
+        const regSnap = await getDocs(
+          query(collection(db, 'registrationRequests'), where('email', '==', req.email.toLowerCase().trim()))
+        );
+        for (const d of regSnap.docs) {
+          await updateDoc(doc(db, 'registrationRequests', d.id), {
+            password: req.newPassword,
+            updatedAt: now
+          }).catch(() => {});
+        }
+      }
+
+      // 2. Mark request as APPROVED
+      await updateDoc(doc(db, 'passwordResetRequests', requestId), {
+        status: 'APPROVED',
+        approvedAt: now,
+        approvedBy: adminName || 'Admin',
+        updatedAt: now
+      });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, path);
+      throw e;
+    }
+  },
+
+  async reject(requestId: string, reason: string, adminName: string): Promise<void> {
+    const path = `passwordResetRequests/${requestId}`;
+    try {
+      const now = new Date().toISOString();
+      await updateDoc(doc(db, 'passwordResetRequests', requestId), {
+        status: 'REJECTED',
+        rejectionReason: reason || 'Rejected by Administrator',
+        approvedBy: adminName || 'Admin',
+        updatedAt: now
+      });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, path);
+      throw e;
+    }
+  },
+
+  async getPendingForUser(emailOrMobile: string): Promise<PasswordResetRequest | null> {
+    const trimmed = emailOrMobile.toLowerCase().trim();
+    const cleanMobile = trimmed.replace(/\D/g, '').slice(-10);
+    try {
+      const q = query(collection(db, 'passwordResetRequests'), where('status', '==', 'PENDING'));
+      const snap = await getDocs(q);
+      const list = snap.docs.map((d) => ({ ...d.data(), id: d.id } as PasswordResetRequest));
+      return (
+        list.find(
+          (r) =>
+            r.email.toLowerCase() === trimmed ||
+            (cleanMobile && r.mobile.replace(/\D/g, '').slice(-10) === cleanMobile)
+        ) || null
+      );
+    } catch {
+      return null;
+    }
+  }
+};
+
 
 // ---------------------------------------------------------------------------
 // 6. MEETINGS SERVICE

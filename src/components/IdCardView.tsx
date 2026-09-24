@@ -37,21 +37,27 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
   const isAdmin =
     member.role === 'ADMIN' ||
     member.code === 'ADM-001' ||
+    member.code === '0.00' ||
+    member.code === '0.0' ||
     member.code === 'KBSS-ADM-001' ||
     displayCode === 'KBSS-ADM-001' ||
     displayCode.includes('ADM') ||
-    member.designation.toLowerCase().includes('admin') ||
-    member.email === 'kishaubandhsangharshsamiti@gmail.com' ||
-    member.name.toLowerCase().includes('narendra');
+    (member.designation && member.designation.toLowerCase().includes('admin')) ||
+    (member.designation && member.designation.toLowerCase().includes('administrator')) ||
+    (member.email && member.email.toLowerCase().includes('kishaubandhsangharshsamiti@gmail.com')) ||
+    (member.name && member.name.toLowerCase().includes('narendra'));
 
   const isPresident =
     !isAdmin &&
     (member.role === 'PRESIDENT' ||
+      displayCode === '0.001' ||
+      displayCode.includes('0.001') ||
       displayCode.includes('PRES') ||
       member.code === '0.001' ||
-      member.designation.toLowerCase().includes('president') ||
-      member.designation.includes('अध्यक्ष') ||
-      member.name.toLowerCase().includes('surat singh'));
+      (member.designation && member.designation.toLowerCase().includes('president')) ||
+      (member.designation && member.designation.includes('अध्यक्ष')) ||
+      (member.name && member.name.toLowerCase().includes('surat singh')) ||
+      (member.name && member.name.toLowerCase().includes('surat')));
 
   const isOfficer =
     !isPresident &&
@@ -567,30 +573,34 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
 
             {/* Dynamic Signatures & Authorities Section */}
             <div className="bg-slate-100/95 border-t border-slate-200 px-2 py-1 flex items-end justify-between gap-1 shrink-0 h-[48px]">
-              {/* President (अध्यक्ष) Signature & Name Block */}
-              <div className="flex flex-col items-center text-center w-[125px] max-w-[40%] shrink-0">
-                <div className="h-4 flex items-end justify-center">
-                  {settings.presidentSignatureUrl ? (
-                    <img
-                      src={settings.presidentSignatureUrl}
-                      alt="President Signature"
-                      crossOrigin="anonymous"
-                      className="max-h-4 max-w-[80px] object-contain"
-                    />
-                  ) : (
-                    <span className="font-serif italic text-[8px] text-slate-800 font-bold leading-none">
-                      {presidentDisplayName}
-                    </span>
-                  )}
+              {/* President (अध्यक्ष) Signature & Name Block - Omitted on President's own ID card */}
+              {!isPresident ? (
+                <div className="flex flex-col items-center text-center w-[125px] max-w-[40%] shrink-0">
+                  <div className="h-4 flex items-end justify-center">
+                    {settings.presidentSignatureUrl ? (
+                      <img
+                        src={settings.presidentSignatureUrl}
+                        alt="President Signature"
+                        crossOrigin="anonymous"
+                        className="max-h-4 max-w-[80px] object-contain"
+                      />
+                    ) : (
+                      <span className="font-serif italic text-[8px] text-slate-800 font-bold leading-none">
+                        {presidentDisplayName}
+                      </span>
+                    )}
+                  </div>
+                  <div className="w-full border-t border-slate-400 mt-0.5 mb-0.5"></div>
+                  <span className="text-[7.5px] font-black text-slate-950 leading-tight block truncate w-full">
+                    {presidentDisplayName}
+                  </span>
+                  <span className="text-[6.5px] font-bold text-slate-600 uppercase tracking-tight block leading-none">
+                    अध्यक्ष (President)
+                  </span>
                 </div>
-                <div className="w-full border-t border-slate-400 mt-0.5 mb-0.5"></div>
-                <span className="text-[7.5px] font-black text-slate-950 leading-tight block truncate w-full">
-                  {presidentDisplayName}
-                </span>
-                <span className="text-[6.5px] font-bold text-slate-600 uppercase tracking-tight block leading-none">
-                  अध्यक्ष (President)
-                </span>
-              </div>
+              ) : (
+                <div className="w-[125px] max-w-[40%] shrink-0 invisible" />
+              )}
 
               {/* Center Official Verification Stamp */}
               <div className="flex flex-col items-center justify-end pb-0.5 shrink-0 px-0.5">
@@ -604,30 +614,34 @@ export const IdCardView: React.FC<IdCardViewProps> = ({ member, settings, onClos
                 </div>
               </div>
 
-              {/* Admin (व्यवस्थापक) Signature & Name Block */}
-              <div className="flex flex-col items-center text-center w-[125px] max-w-[40%] shrink-0 ml-auto">
-                <div className="h-4 flex items-end justify-center">
-                  {settings.adminSignatureUrl ? (
-                    <img
-                      src={settings.adminSignatureUrl}
-                      alt="Admin Signature"
-                      crossOrigin="anonymous"
-                      className="max-h-4 max-w-[80px] object-contain"
-                    />
-                  ) : (
-                    <span className="font-serif italic text-[8px] text-slate-800 font-bold leading-none">
-                      {adminDisplayName}
-                    </span>
-                  )}
+              {/* Admin (व्यवस्थापक) Signature & Name Block - Omitted on Admin's own ID card */}
+              {!isAdmin ? (
+                <div className="flex flex-col items-center text-center w-[125px] max-w-[40%] shrink-0 ml-auto">
+                  <div className="h-4 flex items-end justify-center">
+                    {settings.adminSignatureUrl ? (
+                      <img
+                        src={settings.adminSignatureUrl}
+                        alt="Admin Signature"
+                        crossOrigin="anonymous"
+                        className="max-h-4 max-w-[80px] object-contain"
+                      />
+                    ) : (
+                      <span className="font-serif italic text-[8px] text-slate-800 font-bold leading-none">
+                        {adminDisplayName}
+                      </span>
+                    )}
+                  </div>
+                  <div className="w-full border-t border-slate-400 mt-0.5 mb-0.5"></div>
+                  <span className="text-[7.5px] font-black text-slate-950 leading-tight block truncate w-full">
+                    {adminDisplayName}
+                  </span>
+                  <span className="text-[6.5px] font-bold text-slate-600 uppercase tracking-tight block leading-none">
+                    व्यवस्थापक (Admin)
+                  </span>
                 </div>
-                <div className="w-full border-t border-slate-400 mt-0.5 mb-0.5"></div>
-                <span className="text-[7.5px] font-black text-slate-950 leading-tight block truncate w-full">
-                  {adminDisplayName}
-                </span>
-                <span className="text-[6.5px] font-bold text-slate-600 uppercase tracking-tight block leading-none">
-                  व्यवस्थापक (Admin)
-                </span>
-              </div>
+              ) : (
+                <div className="w-[125px] max-w-[40%] shrink-0 ml-auto invisible" />
+              )}
             </div>
           </div>
         </div>

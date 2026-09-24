@@ -9,8 +9,14 @@ import {
 } from 'firebase/auth';
 import { doc, onSnapshot, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
-import { UserAccount, AccountStatus, UserRole } from '../types';
-import { UserService, RegistrationService, MemberService, formatCardCode } from '../services/db';
+import { UserAccount, AccountStatus, UserRole, PasswordResetRequest } from '../types';
+import {
+  UserService,
+  RegistrationService,
+  MemberService,
+  PasswordResetService,
+  formatCardCode
+} from '../services/db';
 
 export interface AuthContextType {
   currentUser: FirebaseUser | null;
@@ -37,6 +43,7 @@ export interface AuthContextType {
     password: string;
   }) => Promise<{ requestId: string }>;
   resetPassword: (identifier: string) => Promise<string>;
+  requestPasswordReset: (identifier: string, newPass: string, note?: string) => Promise<PasswordResetRequest>;
   logout: () => Promise<void>;
   refreshAccount: () => Promise<void>;
 }
@@ -488,6 +495,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Validate password if stored on user account or registration
         const storedPassword = userByEmail?.password || (reqByEmail as any)?.password;
         if (storedPassword && storedPassword !== pass) {
+          // Check if user has an active pending password reset request
+          try {
+            const pendingReq = await PasswordResetService.getPendingForUser(targetEmail);
+            if (pendingReq && pendingReq.newPassword === pass) {
+              throw new Error(
+                'आपका पासवर्ड रीसेट अनुरोध अभी व्यवस्थापक (Admin) की स्वीकृति के लिए लंबित है। एडमिन द्वारा स्वीकृति मिलने के बाद आप इस नए पासवर्ड से लॉगिन कर सकेंगे।'
+              );
+            }
+          } catch (pendingErr: any) {
+            if (pendingErr.message && pendingErr.message.includes('लंबित')) {
+              throw pendingErr;
+            }
+          }
           throw new Error('Incorrect password. Please verify your credentials or reset your password.');
         }
 
@@ -713,6 +733,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return targetEmail;
   };
 
+  const requestPasswordReset = async (
+    identifier: string,
+    newPass: string,
+    note?: string
+  ): Promise<PasswordResetRequest> => {
+    return await PasswordResetService.submit({
+      identifier,
+      newPassword: newPass,
+      note
+    });
+  };
+
   const logout = async () => {
     await clearAllSessions();
     setCurrentUser(null);
@@ -730,6 +762,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginWithEmailOrMobile,
         registerUser,
         resetPassword,
+        requestPasswordReset,
         logout,
         refreshAccount
       }}

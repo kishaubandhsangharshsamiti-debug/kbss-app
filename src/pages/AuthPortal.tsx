@@ -159,6 +159,15 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
 
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload an image file (PNG, JPG, JPEG)');
+      if (e.target) e.target.value = '';
+      return;
+    }
+
+    // Maximum 500 KB limit check (500 * 1024 bytes)
+    const MAX_SIZE = 500 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast.error('फ़ोटो का आकार अधिकतम 500KB होना चाहिए (Photo file size must not exceed 500KB)');
+      if (e.target) e.target.value = '';
       return;
     }
 
@@ -176,6 +185,7 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
     } catch (err) {
       toast.dismiss(toastId);
       toast.error('Failed to process photo. Please try another image.');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -710,9 +720,14 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
 
                 {/* Applicant Photo Upload */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Applicant Photo (For ID Card) *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Applicant Photo (For ID Card) *
+                    </label>
+                    <span className="text-[10.5px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      अधिकतम आकार: 500 KB (Max 500KB)
+                    </span>
+                  </div>
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-20 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
                       {regPhotoUrl ? (
@@ -724,12 +739,12 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialTab }) => {
                     <div className="flex-1">
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/png, image/jpeg, image/jpg, image/webp"
                         onChange={handlePhotoUpload}
                         className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer"
                       />
                       <p className="text-[11px] text-slate-500 mt-1">
-                        Clear passport-style photo. Formats: PNG, JPG (Max 2MB).
+                        Clear passport-style photo. Formats: PNG, JPG (अधिकतम साइज़: 500KB / Max 500KB).
                       </p>
                     </div>
                   </div>

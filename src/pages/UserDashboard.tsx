@@ -261,6 +261,14 @@ export const UserDashboard: React.FC = () => {
 
     if (!file.type.startsWith('image/')) {
       toast.error('कृपया केवल इमेज (JPG/PNG) फ़ाइल चुनें');
+      if (e.target) e.target.value = '';
+      return;
+    }
+
+    // Max 500 KB limit
+    if (file.size > 500 * 1024) {
+      toast.error('फ़ोटो का आकार अधिकतम 500KB होना चाहिए (Photo must be maximum 500KB)');
+      if (e.target) e.target.value = '';
       return;
     }
 

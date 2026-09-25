@@ -72,6 +72,13 @@ export const CorrectionPage: React.FC = () => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload an image file');
+      if (e.target) e.target.value = '';
+      return;
+    }
+    // Max 500 KB
+    if (file.size > 500 * 1024) {
+      toast.error('फ़ोटो का आकार अधिकतम 500KB होना चाहिए (Photo must not exceed 500KB)');
+      if (e.target) e.target.value = '';
       return;
     }
     const toastId = toast.loading('Optimizing photo...');
@@ -88,6 +95,7 @@ export const CorrectionPage: React.FC = () => {
     } catch (err) {
       toast.dismiss(toastId);
       toast.error('Failed to process photo');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -229,11 +237,13 @@ export const CorrectionPage: React.FC = () => {
                 <div>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png, image/jpeg, image/jpg, image/webp"
                     onChange={handlePhotoUpload}
                     className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 cursor-pointer"
                   />
-                  <p className="text-[11px] text-slate-500 mt-1">Upload a clear photo if requested by the admin.</p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Upload a clear photo if requested by the admin (अधिकतम साइज़: 500KB / Max 500KB).
+                  </p>
                 </div>
               </div>
             </div>

@@ -149,6 +149,12 @@ export const ManageMembers: React.FC = () => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       toast.error('Please select a valid image file');
+      if (e.target) e.target.value = '';
+      return;
+    }
+    if (file.size > 1 * 1024 * 1024) {
+      toast.error('फ़ोटो का आकार अधिकतम 1MB होना चाहिए (Photo must be maximum 1MB)');
+      if (e.target) e.target.value = '';
       return;
     }
     const toastId = toast.loading('Optimizing member photo...');
@@ -646,14 +652,16 @@ export const ManageMembers: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Update Photo</label>
+                <label className="font-bold text-slate-700 block mb-1">
+                  Update Photo <span className="text-xs font-normal text-slate-500">(अधिकतम: 1MB / Max 1MB)</span>
+                </label>
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-14 rounded border bg-slate-50 overflow-hidden shrink-0">
                     {editPhotoUrl && <img src={editPhotoUrl} alt="Photo" className="w-full h-full object-cover" />}
                   </div>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png, image/jpeg, image/jpg, image/webp"
                     onChange={handlePhotoUpload}
                     className="text-xs file:py-1 file:px-2 file:rounded file:border-0 file:bg-slate-100"
                   />
